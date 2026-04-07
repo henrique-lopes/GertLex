@@ -1,0 +1,44 @@
+*.log
+.DS_Store
+
+# Environment — NUNCA commitar
+.env
+.env.*
+!.env.example
+
+# IDE
+.phpactor.json
+.phpunit.result.cache
+/.fleet
+/.idea
+/.nova
+/.phpunit.cache
+/.vscode
+/.zed
+/auth.json
+
+# Dependências (instaladas no deploy)
+/node_modules
+/vendor
+
+# Build assets (gerados no deploy)
+/public/build
+/public/hot
+
+# Storage
+/public/storage
+/storage/*.key
+/storage/pail
+/storage/app/private
+/storage/logs
+/storage/framework/cache
+/storage/framework/sessions
+/storage/framework/testing
+/storage/framework/views
+
+# Misc
+_ide_helper.php
+Homestead.json
+Homestead.yaml
+Thumbs.db
+.claude/

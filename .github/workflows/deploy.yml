@@ -1,0 +1,72 @@
+name: Deploy LexFlow
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - name: Install JS dependencies
+        run: npm ci --legacy-peer-deps
+
+      - name: Build assets
+        run: npm run build
+
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.DEPLOY_HOST }}
+          username: ${{ secrets.DEPLOY_USER }}
+          key: ${{ secrets.DEPLOY_KEY }}
+          script: |
+            set -e
+            cd /var/www/lexflow
+
+            echo "→ Pulling latest code..."
+            git pull origin main
+
+            echo "→ Installing PHP dependencies..."
+            composer install --no-dev --optimize-autoloader --no-interaction
+
+            echo "→ Caching config/routes/views..."
+            php artisan config:cache
+            php artisan route:cache
+            php artisan view:cache
+            php artisan event:cache
+
+            echo "→ Running migrations..."
+            php artisan migrate --force
+
+            echo "→ Linking storage..."
+            php artisan storage:link
+
+            echo "→ Restarting queue workers..."
+            php artisan queue:restart
+
+            echo "→ Reloading PHP-FPM..."
+            sudo systemctl reload php8.3-fpm
+
+            echo "✅ Deploy concluído!"
+
+      - name: Copy built assets to server
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.DEPLOY_HOST }}
+          username: ${{ secrets.DEPLOY_USER }}
+          key: ${{ secrets.DEPLOY_KEY }}
+          source: "public/build"
+          target: "/var/www/lexflow/public"
+          overwrite: true
