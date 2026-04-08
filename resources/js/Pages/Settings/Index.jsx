@@ -77,11 +77,12 @@ export default function SettingsIndex({ workspace }) {
 
     const tabs = [
         ...(!isSuperAdmin ? [
-            { id: 'workspace',     label: 'Escritório',    icon: Building2 },
-            { id: 'plan',          label: 'Plano',          icon: CreditCard },
-            { id: 'notifications', label: 'Notificações',   icon: Bell },
-            { id: 'integrations',  label: 'Integrações',    icon: Zap },
-        ] : []),
+            { id: 'workspace',     label: 'Escritório',  icon: Building2 },
+            { id: 'plan',          label: 'Plano',        icon: CreditCard },
+            { id: 'notifications', label: 'Notificações', icon: Bell },
+        ] : [
+            { id: 'integrations',  label: 'Integrações',  icon: Zap },
+        ]),
         { id: 'profile', label: 'Meu Perfil', icon: UserCircle },
     ];
 
