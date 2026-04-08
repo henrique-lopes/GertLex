@@ -4,7 +4,7 @@ import {
     LayoutDashboard, Briefcase, Users, DollarSign,
     Calendar, FolderOpen, Sparkles, Settings, Menu, X,
     Bell, Search, ChevronDown, LogOut, User, Building2,
-    Sun, Moon, AlertTriangle, Clock, CreditCard, Scale
+    Sun, Moon, AlertTriangle, Clock, CreditCard, Scale, Shield
 } from 'lucide-react';
 import { useTheme } from '@/Contexts/ThemeContext';
 
@@ -124,6 +124,7 @@ function TrialBanner({ trial }) {
 
 export default function AppLayout({ children, title }) {
     const { auth, flash, trial } = usePage().props;
+    const isSuperAdmin = auth?.isSuperAdmin;
     const [collapsed, setCollapsed] = useState(false);
     const [mobileOpen, setMobileOpen] = useState(false);
     const { theme, toggleTheme } = useTheme();
@@ -170,21 +171,37 @@ export default function AppLayout({ children, title }) {
                     {navItems.map(item => (
                         <NavItem key={item.href} {...item} collapsed={collapsed} />
                     ))}
+                    {isSuperAdmin && (
+                        <>
+                            <div className={`px-3 pt-3 pb-1 ${collapsed ? 'hidden' : ''}`}>
+                                <span className="text-[10px] font-semibold text-[#E05555]/60 uppercase tracking-widest">Super Admin</span>
+                            </div>
+                            <NavItem href="/admin" label="Admin Panel" icon={Shield} collapsed={collapsed} />
+                        </>
+                    )}
                 </nav>
 
                 {/* Footer */}
                 {!collapsed && (
                     <div className="px-4 py-4 border-t border-[#1E2330]">
-                        <div className="flex items-center gap-2 mb-1">
-                            <Building2 size={13} className="text-[#6B7491]" />
-                            <span className="text-xs text-[#6B7491] truncate">
-                                {auth?.workspace?.name}
+                        {isSuperAdmin ? (
+                            <span className="inline-flex items-center gap-1.5 text-xs px-2 py-0.5 rounded-full font-medium bg-[#E05555]/15 text-[#E05555]">
+                                <Shield size={11} /> Super Admin
                             </span>
-                        </div>
-                        <Link href="/planos"
-                    className={`inline-block text-xs px-2 py-0.5 rounded-full font-medium transition-opacity hover:opacity-80 ${planMeta.color}`}>
-                    {planMeta.label}
-                </Link>
+                        ) : (
+                            <>
+                                <div className="flex items-center gap-2 mb-1">
+                                    <Building2 size={13} className="text-[#6B7491]" />
+                                    <span className="text-xs text-[#6B7491] truncate">
+                                        {auth?.workspace?.name}
+                                    </span>
+                                </div>
+                                <Link href="/planos"
+                                    className={`inline-block text-xs px-2 py-0.5 rounded-full font-medium transition-opacity hover:opacity-80 ${planMeta.color}`}>
+                                    {planMeta.label}
+                                </Link>
+                            </>
+                        )}
                     </div>
                 )}
 

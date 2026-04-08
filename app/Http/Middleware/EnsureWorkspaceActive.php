@@ -17,6 +17,11 @@ class EnsureWorkspaceActive
 
     public function handle(Request $request, Closure $next): Response
     {
+        // Super admin bypasses workspace checks
+        if ($request->user()?->is_super_admin) {
+            return $next($request);
+        }
+
         $workspace = $request->user()?->currentWorkspace;
 
         if (!$workspace) {
