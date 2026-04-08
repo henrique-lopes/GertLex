@@ -65,9 +65,9 @@ class DatabaseSeeder extends Seeder
 
         // ── Advogados ─────────────────────────────────────────
         $lawyersData = [
-            ['Dra. Ana Lima',      'ana.lima@lexflow.test',    '234567', ['Cível', 'Família']],
-            ['Dr. Pedro Costa',    'pedro.costa@lexflow.test', '345678', ['Empresarial', 'Tributário']],
-            ['Dra. Camila Torres', 'camila@lexflow.test',      '456789', ['Criminal', 'Previdenciário']],
+            ['Dra. Ana Lima',      'ana.lima@gertlex.test',    '234567', ['Cível', 'Família']],
+            ['Dr. Pedro Costa',    'pedro.costa@gertlex.test', '345678', ['Empresarial', 'Tributário']],
+            ['Dra. Camila Torres', 'camila@gertlex.test',      '456789', ['Criminal', 'Previdenciário']],
         ];
 
         $lawyerIds = [];
