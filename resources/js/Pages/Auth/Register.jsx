@@ -28,7 +28,7 @@ export default function Register() {
                 <div className="flex flex-col items-center mb-8">
                     <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-[#C9A84C] to-[#7A5F28]
                         flex items-center justify-center mb-4 shadow-lg shadow-[#C9A84C]/20">
-                        <span className="text-black font-black text-2xl">L</span>
+                        <span className="text-black font-black text-2xl">G</span>
                     </div>
                     <h1 className="text-2xl font-bold text-[#E8EAF0]">
                         Gert<span className="text-[#C9A84C]">Lex</span>
