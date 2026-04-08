@@ -9,7 +9,7 @@ use Inertia\Inertia;
 
 class SettingsWebController extends Controller
 {
-    private function workspace(Request $request): Workspace
+    private function workspace(Request $request): ?Workspace
     {
         return $request->user()->currentWorkspace;
     }
@@ -24,6 +24,10 @@ class SettingsWebController extends Controller
     public function updateWorkspace(Request $request)
     {
         $workspace = $this->workspace($request);
+
+        if (!$workspace) {
+            return back()->with('error', 'Nenhum workspace associado.');
+        }
 
         $data = $request->validate([
             'name'               => 'required|string|max:255',
