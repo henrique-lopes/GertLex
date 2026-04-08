@@ -4,7 +4,7 @@ import {
     LayoutDashboard, Briefcase, Users, DollarSign,
     Calendar, FolderOpen, Sparkles, Settings, Menu, X,
     Bell, Search, ChevronDown, LogOut, User, Building2,
-    Sun, Moon, AlertTriangle, Clock, CreditCard
+    Sun, Moon, AlertTriangle, Clock, CreditCard, Scale
 } from 'lucide-react';
 import { useTheme } from '@/Contexts/ThemeContext';
 
@@ -156,7 +156,7 @@ export default function AppLayout({ children, title }) {
                     ${collapsed ? 'justify-center' : ''}`}>
                     <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#C9A84C] to-[#7A5F28]
                         flex items-center justify-center shrink-0">
-                        <span className="text-black font-black text-sm">G</span>
+                        <Scale size={16} className="text-black" strokeWidth={2.5} />
                     </div>
                     {!collapsed && (
                         <span className="text-lg font-bold text-[#E8EAF0]">
