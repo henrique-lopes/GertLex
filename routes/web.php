@@ -14,6 +14,15 @@ use App\Http\Controllers\Web\DocumentWebController;
 use App\Http\Controllers\Web\AIWebController;
 use App\Http\Controllers\Web\SettingsWebController;
 use App\Http\Controllers\Web\PlanController;
+use App\Http\Controllers\Web\AdminController;
+
+// ── Super Admin ─────────────────────────────────────────────────
+Route::middleware(['auth', 'super.admin'])->prefix('admin')->name('admin.')->group(function () {
+    Route::get('/',                         [AdminController::class, 'index'])->name('index');
+    Route::get('/workspaces/{id}',          [AdminController::class, 'show'])->name('workspaces.show');
+    Route::put('/workspaces/{id}/plan',     [AdminController::class, 'updatePlan'])->name('workspaces.plan');
+    Route::post('/workspaces/{id}/toggle',  [AdminController::class, 'toggleActive'])->name('workspaces.toggle');
+});
 
 // ── App (protegido) ─────────────────────────────────────────────
 Route::middleware(['auth', 'verified'])->group(function () {

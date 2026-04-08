@@ -14,7 +14,7 @@ class User extends Authenticatable
     protected $fillable = [
         'uuid', 'name', 'email', 'password',
         'oab_number', 'oab_state', 'cpf', 'phone', 'avatar_url',
-        'birth_date', 'specialties', 'current_workspace_id',
+        'birth_date', 'specialties', 'current_workspace_id', 'is_super_admin',
     ];
 
     protected $hidden = ['password', 'remember_token'];
@@ -24,6 +24,7 @@ class User extends Authenticatable
         'birth_date'        => 'date',
         'specialties'       => 'array',
         'password'          => 'hashed',
+        'is_super_admin'    => 'boolean',
     ];
 
     public function currentWorkspace() {
