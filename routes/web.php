@@ -88,6 +88,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         // Configurações
         Route::get('/configuracoes',             [SettingsWebController::class, 'index'])->name('settings.index');
         Route::put('/configuracoes/workspace',   [SettingsWebController::class, 'updateWorkspace'])->name('settings.workspace.update');
+        Route::put('/configuracoes/perfil',      [SettingsWebController::class, 'updateProfile'])->name('settings.profile.update');
     });
 });
 

@@ -168,7 +168,7 @@ export default function AppLayout({ children, title }) {
 
                 {/* Nav */}
                 <nav className="flex-1 overflow-y-auto px-2 py-4 space-y-1">
-                    {navItems.map(item => (
+                    {(!isSuperAdmin || auth?.workspace) && navItems.map(item => (
                         <NavItem key={item.href} {...item} collapsed={collapsed} />
                     ))}
                     {isSuperAdmin && (
@@ -177,6 +177,7 @@ export default function AppLayout({ children, title }) {
                                 <span className="text-[10px] font-semibold text-[#E05555]/60 uppercase tracking-widest">Super Admin</span>
                             </div>
                             <NavItem href="/admin" label="Admin Panel" icon={Shield} collapsed={collapsed} />
+                            <NavItem href="/configuracoes" label="Configurações" icon={Settings} collapsed={collapsed} />
                         </>
                     )}
                 </nav>

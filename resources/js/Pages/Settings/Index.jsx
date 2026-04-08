@@ -2,14 +2,7 @@ import { useState } from 'react';
 import { Head, useForm, usePage } from '@inertiajs/react';
 import AppLayout from '@/Layouts/AppLayout';
 import Button from '@/Components/UI/Button';
-import { Building2, CreditCard, Bell, Zap } from 'lucide-react';
-
-const tabs = [
-    { id: 'workspace', label: 'Escritório',    icon: Building2 },
-    { id: 'plan',      label: 'Plano',          icon: CreditCard },
-    { id: 'notifications', label: 'Notificações', icon: Bell },
-    { id: 'integrations',  label: 'Integrações',  icon: Zap },
-];
+import { Building2, CreditCard, Bell, Zap, UserCircle } from 'lucide-react';
 
 const planInfo = {
     trial:   { label: 'Trial',   color: 'text-yellow-400', desc: '14 dias grátis' },
@@ -29,8 +22,70 @@ function FInput({ label, error, ...props }) {
     );
 }
 
+function ProfileForm({ user }) {
+    const { data, setData, put, processing, errors, recentlySuccessful } = useForm({
+        name:             user?.name ?? '',
+        email:            user?.email ?? '',
+        current_password: '',
+        password:         '',
+        password_confirmation: '',
+    });
+
+    function submit(e) {
+        e.preventDefault();
+        put(route('settings.profile.update'));
+    }
+
+    return (
+        <form onSubmit={submit}>
+            <div className="bg-[#13161E] border border-[#1E2330] rounded-xl p-6 space-y-5">
+                <h2 className="text-base font-semibold text-[#E8EAF0]">Meu Perfil</h2>
+
+                {recentlySuccessful && (
+                    <div className="px-4 py-3 rounded-lg bg-[#2ECC8A]/10 text-[#2ECC8A] text-sm border border-[#2ECC8A]/20">
+                        Perfil atualizado com sucesso!
+                    </div>
+                )}
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <FInput label="Nome *" value={data.name} onChange={e => setData('name', e.target.value)} error={errors.name} />
+                    <FInput label="E-mail *" type="email" value={data.email} onChange={e => setData('email', e.target.value)} error={errors.email} />
+                </div>
+
+                <hr className="border-[#1E2330]" />
+                <h3 className="text-sm font-semibold text-[#E8EAF0]">Alterar Senha</h3>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <FInput label="Senha Atual" type="password" value={data.current_password} onChange={e => setData('current_password', e.target.value)} error={errors.current_password} placeholder="••••••••" />
+                    <FInput label="Nova Senha" type="password" value={data.password} onChange={e => setData('password', e.target.value)} error={errors.password} placeholder="••••••••" />
+                    <FInput label="Confirmar Nova Senha" type="password" value={data.password_confirmation} onChange={e => setData('password_confirmation', e.target.value)} placeholder="••••••••" />
+                </div>
+
+                <div className="flex justify-end pt-2">
+                    <Button type="submit" disabled={processing}>
+                        {processing ? 'Salvando...' : 'Salvar Perfil'}
+                    </Button>
+                </div>
+            </div>
+        </form>
+    );
+}
+
 export default function SettingsIndex({ workspace }) {
-    const [tab, setTab] = useState('workspace');
+    const { auth } = usePage().props;
+    const isSuperAdmin = auth?.isSuperAdmin && !workspace;
+
+    const tabs = [
+        ...(!isSuperAdmin ? [
+            { id: 'workspace',     label: 'Escritório',    icon: Building2 },
+            { id: 'plan',          label: 'Plano',          icon: CreditCard },
+            { id: 'notifications', label: 'Notificações',   icon: Bell },
+            { id: 'integrations',  label: 'Integrações',    icon: Zap },
+        ] : []),
+        { id: 'profile', label: 'Meu Perfil', icon: UserCircle },
+    ];
+
+    const [tab, setTab] = useState(isSuperAdmin ? 'profile' : 'workspace');
 
     const { data, setData, put, processing, errors, recentlySuccessful } = useForm({
         name:            workspace?.name ?? '',
@@ -182,6 +237,11 @@ export default function SettingsIndex({ workspace }) {
                                 ))}
                             </div>
                         </div>
+                    )}
+
+                    {/* Profile */}
+                    {tab === 'profile' && (
+                        <ProfileForm user={auth?.user} />
                     )}
 
                     {/* Integrations */}

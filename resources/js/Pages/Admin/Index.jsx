@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Head, Link, router, usePage } from '@inertiajs/react';
+import AppLayout from '@/Layouts/AppLayout';
 import {
     Building2, Users, CreditCard, Shield, TrendingUp,
     ChevronRight, ToggleLeft, ToggleRight, Search
@@ -47,19 +48,8 @@ export default function AdminIndex({ workspaces, stats }) {
     }
 
     return (
-        <div className="min-h-screen bg-[#0D0F14] text-[#E8EAF0] p-6">
+        <AppLayout title="Admin Panel">
             <Head title="Super Admin — GertLex" />
-
-            {/* Header */}
-            <div className="flex items-center gap-3 mb-8">
-                <div className="w-9 h-9 rounded-lg bg-[#E05555]/15 flex items-center justify-center">
-                    <Shield size={18} className="text-[#E05555]" />
-                </div>
-                <div>
-                    <h1 className="text-xl font-bold text-[#E8EAF0]">Painel Super Admin</h1>
-                    <p className="text-xs text-[#6B7491]">Gestão de workspaces e planos</p>
-                </div>
-            </div>
 
             {flash?.success && (
                 <div className="mb-6 px-4 py-3 rounded-lg bg-[#2ECC8A]/10 text-[#2ECC8A] border border-[#2ECC8A]/20 text-sm">
@@ -68,6 +58,12 @@ export default function AdminIndex({ workspaces, stats }) {
             )}
 
             {/* Stats */}
+            <div className="flex items-center gap-2 mb-6">
+                <div className="w-7 h-7 rounded-lg bg-[#E05555]/15 flex items-center justify-center">
+                    <Shield size={15} className="text-[#E05555]" />
+                </div>
+                <h2 className="text-base font-semibold text-[#E8EAF0]">Gestão de Workspaces</h2>
+            </div>
             <div className="grid grid-cols-2 lg:grid-cols-5 gap-4 mb-8">
                 <StatCard label="Total Escritórios" value={stats.total_workspaces} icon={Building2} color="bg-[#4A7CFF]/15 text-[#4A7CFF]" />
                 <StatCard label="Ativos"            value={stats.active}           icon={TrendingUp} color="bg-[#2ECC8A]/15 text-[#2ECC8A]" />
@@ -145,6 +141,6 @@ export default function AdminIndex({ workspaces, stats }) {
                     </tbody>
                 </table>
             </div>
-        </div>
+        </AppLayout>
     );
 }

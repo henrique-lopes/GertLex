@@ -13,12 +13,19 @@ class EnsureWorkspaceActive
         'plans.index',
         'settings.index',
         'settings.workspace.update',
+        'settings.profile.update',
     ];
 
     public function handle(Request $request, Closure $next): Response
     {
-        // Super admin bypasses workspace checks
+        // Super admin sem workspace só acessa /admin e /configuracoes
         if ($request->user()?->is_super_admin) {
+            if (!$request->user()->currentWorkspace) {
+                if ($request->routeIs('settings.index', 'settings.profile.update')) {
+                    return $next($request);
+                }
+                return redirect('/admin');
+            }
             return $next($request);
         }
 

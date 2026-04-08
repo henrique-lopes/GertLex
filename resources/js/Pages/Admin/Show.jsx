@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Head, Link, router, usePage } from '@inertiajs/react';
+import AppLayout from '@/Layouts/AppLayout';
 import { ArrowLeft, Shield, Users, CreditCard, ToggleLeft, ToggleRight } from 'lucide-react';
 
 const PLANS = ['trial', 'starter', 'pro', 'premium'];
@@ -28,7 +29,7 @@ export default function AdminShow({ workspace }) {
     }
 
     return (
-        <div className="min-h-screen bg-[#0D0F14] text-[#E8EAF0] p-6 max-w-4xl mx-auto">
+        <AppLayout title={workspace.name}>
             <Head title={`Admin — ${workspace.name}`} />
 
             <Link href="/admin" className="inline-flex items-center gap-2 text-sm text-[#6B7491] hover:text-[#E8EAF0] mb-6 transition-colors">
@@ -151,6 +152,6 @@ export default function AdminShow({ workspace }) {
                     </tbody>
                 </table>
             </div>
-        </div>
+        </AppLayout>
     );
 }

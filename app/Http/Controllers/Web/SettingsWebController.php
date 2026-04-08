@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Web;
 use App\Http\Controllers\Controller;
 use App\Models\Workspace;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Hash;
 use Inertia\Inertia;
 
 class SettingsWebController extends Controller
@@ -48,5 +49,35 @@ class SettingsWebController extends Controller
 
         return redirect()->route('settings.index')
             ->with('success', 'Configurações atualizadas com sucesso!');
+    }
+
+    public function updateProfile(Request $request)
+    {
+        $data = $request->validate([
+            'name'                  => 'required|string|max:255',
+            'email'                 => 'required|email|unique:users,email,' . $request->user()->id,
+            'current_password'      => 'nullable|string',
+            'password'              => 'nullable|string|min:8|confirmed',
+        ]);
+
+        $user = $request->user();
+
+        if (!empty($data['current_password'])) {
+            if (!Hash::check($data['current_password'], $user->password)) {
+                return back()->withErrors(['current_password' => 'Senha atual incorreta.']);
+            }
+        }
+
+        $user->name  = $data['name'];
+        $user->email = $data['email'];
+
+        if (!empty($data['password'])) {
+            $user->password = Hash::make($data['password']);
+        }
+
+        $user->save();
+
+        return redirect()->route('settings.index')
+            ->with('success', 'Perfil atualizado com sucesso!');
     }
 }
