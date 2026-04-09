@@ -23,6 +23,7 @@ jobs:
             cd /var/www/gertlex
 
             echo "→ Pulling latest code..."
+            git checkout -- composer.json composer.lock
             git pull origin main
 
             echo "→ Installing PHP dependencies..."
