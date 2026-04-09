@@ -208,11 +208,10 @@ class CaseWebController extends Controller
     {
         $wsId = $this->workspaceId($request);
         $case = LegalCase::where('workspace_id', $wsId)->where('uuid', $uuid)->firstOrFail();
-        $this->authorize('update', $case);
 
         $data = $request->validate([
             'title'               => 'required|string|max:255',
-            'client_id'           => 'required|exists:clients,id',
+            'client_id'           => 'nullable|exists:clients,id',
             'responsible_user_id' => 'required|exists:users,id',
             'area'                => 'required|string|max:50',
             'cnj_number'          => 'nullable|string|max:30',
