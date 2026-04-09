@@ -46,18 +46,27 @@ class DocumentWebController extends Controller
 
     public function store(Request $request)
     {
-        $wsId = $this->workspaceId($request);
+        $wsId      = $this->workspaceId($request);
+        $workspace = $request->user()->currentWorkspace;
 
         $request->validate([
-            'file'     => 'required|file|max:51200', // 50MB
-            'name'     => 'nullable|string|max:255',
-            'case_id'  => 'nullable|exists:cases,id',
-            'client_id'=> 'nullable|exists:clients,id',
-            'category' => 'nullable|string|max:50',
+            'file'        => 'required|file|max:51200', // 50MB por arquivo
+            'name'        => 'nullable|string|max:255',
+            'case_id'     => 'nullable|exists:cases,id',
+            'client_id'   => 'nullable|exists:clients,id',
+            'category'    => 'nullable|string|max:50',
             'description' => 'nullable|string',
         ]);
 
         $file = $request->file('file');
+
+        if (!$workspace->canUploadFile($file->getSize())) {
+            $used  = round($workspace->storage_used_mb / 1024, 1);
+            $limit = $workspace->storage_gb;
+            return redirect()->back()
+                ->with('error', "Armazenamento cheio ({$used}GB de {$limit}GB usados). Faça upgrade do plano para continuar enviando documentos.");
+        }
+
         $path = $file->store("workspaces/{$wsId}/documents", 'private');
 
         Document::create([
@@ -76,6 +85,8 @@ class DocumentWebController extends Controller
             'description'   => $request->description,
         ]);
 
+        $workspace->addStorageUsed($file->getSize());
+
         return redirect()->route('documents.index')
             ->with('success', 'Documento enviado com sucesso!');
     }
@@ -84,6 +95,9 @@ class DocumentWebController extends Controller
     {
         $wsId     = $this->workspaceId($request);
         $document = Document::where('workspace_id', $wsId)->findOrFail($id);
+
+        $workspace = $request->user()->currentWorkspace;
+        $workspace->removeStorageUsed($document->size_bytes);
 
         Storage::disk('private')->delete($document->storage_path);
         $document->delete();

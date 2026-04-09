@@ -13,12 +13,25 @@ class PlanController extends Controller
     public function index(Request $request): Response
     {
         $workspace = $request->user()->currentWorkspace;
+        $isSolo    = $workspace->type === 'solo';
+
+        // Filtra planos pelo tipo do workspace
+        $planKeys = $isSolo
+            ? ['solo_trial', 'solo_starter', 'solo_pro']
+            : ['trial', 'starter', 'pro', 'premium'];
+
+        $plans = collect(Workspace::PLANS)
+            ->only($planKeys)
+            ->toArray();
 
         return Inertia::render('Plans/Index', [
-            'workspace'  => $workspace,
-            'plans'      => Workspace::PLANS,
-            'trialDays'  => $workspace->daysRemainingInTrial(),
-            'blockReason'=> session('plan_block'),
+            'workspace'    => array_merge($workspace->toArray(), [
+                'storage_used_percent' => $workspace->storageUsedPercent(),
+            ]),
+            'plans'        => $plans,
+            'isSolo'       => $isSolo,
+            'trialDays'    => $workspace->daysRemainingInTrial(),
+            'blockReason'  => session('plan_block'),
         ]);
     }
 
@@ -28,13 +41,13 @@ class PlanController extends Controller
      */
     public function requestUpgrade(Request $request): \Illuminate\Http\RedirectResponse
     {
-        $request->validate(['plan' => 'required|in:starter,pro,premium']);
+        $validPlans = array_keys(Workspace::PLANS);
+        $request->validate(['plan' => 'required|in:' . implode(',', $validPlans)]);
 
         $workspace = $request->user()->currentWorkspace;
         $plan      = Workspace::PLANS[$request->plan];
 
         // TODO: Integrar com Asaas para gerar checkout
-        // Por ora, redireciona para WhatsApp com mensagem pré-preenchida
         $message = urlencode(
             "Olá! Tenho interesse em assinar o plano *{$plan['label']}* do GertLex " .
             "para o escritório *{$workspace->name}*. Pode me ajudar?"

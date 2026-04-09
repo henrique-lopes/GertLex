@@ -1,27 +1,24 @@
 import { Head, useForm, usePage } from '@inertiajs/react';
 import AppLayout from '@/Layouts/AppLayout';
-import { Check, X, Sparkles, AlertTriangle, Clock, MessageCircle, Zap } from 'lucide-react';
+import { Check, X, Sparkles, AlertTriangle, Clock, MessageCircle, Zap, HardDrive } from 'lucide-react';
 
-const PLAN_ORDER = ['starter', 'pro', 'premium'];
+const FIRM_ORDER  = ['trial', 'starter', 'pro', 'premium'];
+const SOLO_ORDER  = ['solo_trial', 'solo_starter', 'solo_pro'];
 
 const PLAN_STYLE = {
-    trial:   { color: '#6B7491', gradient: 'from-[#6B7491]/20 to-[#6B7491]/5',  badge: 'bg-[#6B7491]/15 text-[#6B7491]' },
-    starter: { color: '#4A7CFF', gradient: 'from-[#4A7CFF]/20 to-[#4A7CFF]/5',  badge: 'bg-[#4A7CFF]/15 text-[#4A7CFF]' },
-    pro:     { color: '#C9A84C', gradient: 'from-[#C9A84C]/20 to-[#C9A84C]/5',  badge: 'bg-[#C9A84C]/15 text-[#C9A84C]', popular: true },
-    premium: { color: '#2ECC8A', gradient: 'from-[#2ECC8A]/20 to-[#2ECC8A]/5',  badge: 'bg-[#2ECC8A]/15 text-[#2ECC8A]' },
+    trial:        { color: '#6B7491', gradient: 'from-[#6B7491]/20 to-[#6B7491]/5', badge: 'bg-[#6B7491]/15 text-[#6B7491]' },
+    starter:      { color: '#4A7CFF', gradient: 'from-[#4A7CFF]/20 to-[#4A7CFF]/5', badge: 'bg-[#4A7CFF]/15 text-[#4A7CFF]' },
+    pro:          { color: '#C9A84C', gradient: 'from-[#C9A84C]/20 to-[#C9A84C]/5', badge: 'bg-[#C9A84C]/15 text-[#C9A84C]', popular: true },
+    premium:      { color: '#2ECC8A', gradient: 'from-[#2ECC8A]/20 to-[#2ECC8A]/5', badge: 'bg-[#2ECC8A]/15 text-[#2ECC8A]' },
+    solo_trial:   { color: '#6B7491', gradient: 'from-[#6B7491]/20 to-[#6B7491]/5', badge: 'bg-[#6B7491]/15 text-[#6B7491]' },
+    solo_starter: { color: '#4A7CFF', gradient: 'from-[#4A7CFF]/20 to-[#4A7CFF]/5', badge: 'bg-[#4A7CFF]/15 text-[#4A7CFF]' },
+    solo_pro:     { color: '#C9A84C', gradient: 'from-[#C9A84C]/20 to-[#C9A84C]/5', badge: 'bg-[#C9A84C]/15 text-[#C9A84C]', popular: true },
 };
 
-const FEATURES = [
-    { key: 'lawyers',    label: 'Advogados',          getValue: p => p.max_lawyers === -1 ? 'Ilimitado' : `Até ${p.max_lawyers}` },
-    { key: 'cases',      label: 'Processos ativos',   getValue: p => p.max_cases   === -1 ? 'Ilimitado' : `Até ${p.max_cases}` },
-    { key: 'documents',  label: 'Documentos',         getValue: () => 'Ilimitado' },
-    { key: 'finance',    label: 'Financeiro',         getValue: () => true },
-    { key: 'calendar',   label: 'Agenda',             getValue: () => true },
-    { key: 'ai',         label: 'IA Jurídica',        getValue: p => p.has_ai },
-    { key: 'portal',     label: 'Portal do cliente',  getValue: p => p.has_client_portal },
-    { key: 'whitelabel', label: 'White Label',        getValue: p => p.has_white_label },
-    { key: 'support',    label: 'Suporte',            getValue: (_, key) => ({ trial: 'E-mail', starter: 'E-mail + Chat', pro: 'Prioritário', premium: 'Dedicado' })[key] },
-];
+function storageLabel(gb) {
+    if (gb === -1) return 'Ilimitado';
+    return `${gb} GB`;
+}
 
 function FeatureValue({ value }) {
     if (value === true)  return <Check size={16} className="text-[#2ECC8A] mx-auto" />;
@@ -29,9 +26,48 @@ function FeatureValue({ value }) {
     return <span className="text-xs text-[#E8EAF0]">{value}</span>;
 }
 
+function StorageBar({ usedPercent, storageGb }) {
+    if (!usedPercent && usedPercent !== 0) return null;
+    const color = usedPercent >= 90 ? '#E05555' : usedPercent >= 70 ? '#F5A623' : '#2ECC8A';
+    return (
+        <div className="bg-[#13161E] border border-[#1E2330] rounded-xl p-4 mb-6">
+            <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center gap-2 text-sm text-[#E8EAF0]">
+                    <HardDrive size={15} className="text-[#6B7491]" />
+                    <span>Armazenamento usado</span>
+                </div>
+                <span className="text-xs text-[#6B7491]">
+                    {usedPercent}% de {storageGb === -1 ? '∞' : `${storageGb}GB`}
+                </span>
+            </div>
+            <div className="h-2 bg-[#0D0F14] rounded-full overflow-hidden">
+                <div
+                    className="h-full rounded-full transition-all"
+                    style={{ width: `${Math.min(usedPercent, 100)}%`, backgroundColor: color }}
+                />
+            </div>
+            {usedPercent >= 80 && (
+                <p className="text-xs mt-2" style={{ color }}>
+                    {usedPercent >= 90
+                        ? 'Armazenamento quase cheio! Faça upgrade para continuar enviando documentos.'
+                        : 'Você está usando mais de 80% do armazenamento disponível.'}
+                </p>
+            )}
+        </div>
+    );
+}
+
 function PlanCard({ planKey, plan, isCurrent, onUpgrade, processing }) {
-    const style   = PLAN_STYLE[planKey];
-    const isFree  = plan.price === 0;
+    const style  = PLAN_STYLE[planKey] ?? PLAN_STYLE.starter;
+    const isFree = plan.price === 0;
+
+    const features = [
+        plan.max_cases === -1 ? 'Processos ilimitados' : `Até ${plan.max_cases} processos`,
+        `${storageLabel(plan.storage_gb)} de armazenamento`,
+        ...(plan.has_ai ? ['IA Jurídica incluída'] : []),
+        ...(plan.has_client_portal ? ['Portal do cliente'] : []),
+        ...(plan.has_white_label ? ['White Label'] : []),
+    ];
 
     return (
         <div className={`relative flex flex-col rounded-2xl border transition-all
@@ -74,7 +110,7 @@ function PlanCard({ planKey, plan, isCurrent, onUpgrade, processing }) {
                                 <span className="text-3xl font-black text-[#E8EAF0]">{plan.price.toLocaleString('pt-BR')}</span>
                                 <span className="text-sm text-[#6B7491]">/mês</span>
                             </div>
-                            <p className="text-xs text-[#6B7491] mt-1">por escritório · cobrado mensalmente</p>
+                            <p className="text-xs text-[#6B7491] mt-1">cobrado mensalmente · cancele quando quiser</p>
                         </div>
                     )}
                 </div>
@@ -104,43 +140,44 @@ function PlanCard({ planKey, plan, isCurrent, onUpgrade, processing }) {
             <div className="border-t border-[#1E2330] px-6 py-4 flex-1">
                 <p className="text-xs font-semibold text-[#6B7491] uppercase tracking-wider mb-3">Incluso</p>
                 <ul className="space-y-2.5">
-                    {FEATURES.filter(f => ['lawyers','cases','ai','portal','support'].includes(f.key)).map(f => {
-                        const val = f.getValue(plan, planKey);
-                        if (val === false) return null;
-                        return (
-                            <li key={f.key} className="flex items-center gap-2 text-sm text-[#E8EAF0]">
-                                <Check size={14} style={{ color: style.color }} className="shrink-0" />
-                                <span>
-                                    {f.label}
-                                    {typeof val === 'string' && val !== 'true' && (
-                                        <span className="text-[#6B7491]"> — {val}</span>
-                                    )}
-                                </span>
-                            </li>
-                        );
-                    })}
+                    {features.map(f => (
+                        <li key={f} className="flex items-center gap-2 text-sm text-[#E8EAF0]">
+                            <Check size={14} style={{ color: style.color }} className="shrink-0" />
+                            <span>{f}</span>
+                        </li>
+                    ))}
                 </ul>
             </div>
         </div>
     );
 }
 
-export default function PlansIndex({ workspace, plans, trialDays, blockReason }) {
-    const { data, post, processing } = useForm({ plan: '' });
+export default function PlansIndex({ workspace, plans, isSolo, trialDays, blockReason }) {
+    const { post, processing } = useForm({});
 
     function handleUpgrade(planKey) {
         post(route('plans.upgrade'), { data: { plan: planKey } });
     }
 
-    const currentPlan = workspace?.plan ?? 'trial';
+    const currentPlan = workspace?.plan ?? (isSolo ? 'solo_trial' : 'trial');
     const isTrialing  = workspace?.plan_status === 'trialing';
     const isBlocked   = workspace?.plan_status === 'canceled' || workspace?.plan_status === 'blocked';
+    const planOrder   = isSolo ? SOLO_ORDER : FIRM_ORDER;
+    const gridCols    = isSolo ? 'md:grid-cols-3' : 'md:grid-cols-4';
 
     return (
         <AppLayout title="Planos">
             <Head title="Planos — GertLex" />
 
             <div className="max-w-6xl mx-auto">
+
+                {/* Storage bar */}
+                {workspace?.storage_gb && (
+                    <StorageBar
+                        usedPercent={workspace.storage_used_percent}
+                        storageGb={workspace.storage_gb}
+                    />
+                )}
 
                 {/* Block / expiry alert */}
                 {(blockReason || isBlocked) && (
@@ -171,16 +208,16 @@ export default function PlansIndex({ workspace, plans, trialDays, blockReason })
                 {/* Header */}
                 <div className="text-center mb-10">
                     <h1 className="text-2xl font-black text-[#E8EAF0] mb-2">
-                        Escolha o plano ideal para o seu escritório
+                        {isSolo ? 'Planos para Advogado Autônomo' : 'Planos para Escritório'}
                     </h1>
                     <p className="text-[#6B7491] text-sm">
-                        Todos os planos incluem onboarding gratuito e migração de dados assistida.
+                        Todos os planos incluem onboarding gratuito e suporte por e-mail.
                     </p>
                 </div>
 
                 {/* Plan cards */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
-                    {PLAN_ORDER.map(key => (
+                <div className={`grid grid-cols-1 ${gridCols} gap-6 mb-12`}>
+                    {planOrder.map(key => plans[key] && (
                         <PlanCard
                             key={key}
                             planKey={key}
@@ -204,9 +241,9 @@ export default function PlansIndex({ workspace, plans, trialDays, blockReason })
                                     <th className="text-left px-6 py-3 text-xs font-semibold text-[#6B7491] uppercase tracking-wider w-1/3">
                                         Recurso
                                     </th>
-                                    {['trial', ...PLAN_ORDER].map(key => (
+                                    {planOrder.map(key => plans[key] && (
                                         <th key={key} className="px-4 py-3 text-center">
-                                            <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${PLAN_STYLE[key].badge}`}>
+                                            <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${PLAN_STYLE[key]?.badge}`}>
                                                 {plans[key]?.label}
                                             </span>
                                         </th>
@@ -214,12 +251,21 @@ export default function PlansIndex({ workspace, plans, trialDays, blockReason })
                                 </tr>
                             </thead>
                             <tbody>
-                                {FEATURES.map((f, i) => (
-                                    <tr key={f.key} className={`border-b border-[#1E2330] ${i % 2 === 0 ? '' : 'bg-[#0D0F14]/40'}`}>
-                                        <td className="px-6 py-3 text-sm text-[#E8EAF0]">{f.label}</td>
-                                        {['trial', ...PLAN_ORDER].map(key => (
+                                {[
+                                    { label: 'Processos',       fn: p => p.max_cases   === -1 ? 'Ilimitado' : `Até ${p.max_cases}` },
+                                    { label: 'Armazenamento',   fn: p => storageLabel(p.storage_gb) },
+                                    { label: 'Financeiro',      fn: () => true },
+                                    { label: 'Agenda',          fn: () => true },
+                                    { label: 'Documentos',      fn: () => true },
+                                    { label: 'IA Jurídica',     fn: p => p.has_ai },
+                                    { label: 'Portal do Cliente', fn: p => p.has_client_portal },
+                                    { label: 'White Label',     fn: p => p.has_white_label ?? false },
+                                ].map((row, i) => (
+                                    <tr key={row.label} className={`border-b border-[#1E2330] ${i % 2 === 0 ? '' : 'bg-[#0D0F14]/40'}`}>
+                                        <td className="px-6 py-3 text-sm text-[#E8EAF0]">{row.label}</td>
+                                        {planOrder.map(key => plans[key] && (
                                             <td key={key} className="px-4 py-3 text-center">
-                                                <FeatureValue value={f.getValue(plans[key], key)} />
+                                                <FeatureValue value={row.fn(plans[key])} />
                                             </td>
                                         ))}
                                     </tr>

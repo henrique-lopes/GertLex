@@ -16,7 +16,8 @@ class Workspace extends Model
         'address_neighborhood', 'address_city', 'address_state', 'address_zipcode',
         'plan', 'plan_status', 'trial_ends_at', 'plan_expires_at',
         'asaas_customer_id', 'asaas_subscription_id',
-        'max_lawyers', 'max_cases', 'has_ai', 'has_client_portal', 'has_white_label',
+        'max_lawyers', 'max_cases', 'storage_gb', 'storage_used_mb',
+        'has_ai', 'has_client_portal', 'has_white_label',
         'timezone', 'settings', 'is_active',
     ];
 
@@ -39,6 +40,7 @@ class Workspace extends Model
             'type'        => 'firm',
             'max_lawyers' => 3,
             'max_cases'   => 20,
+            'storage_gb'  => 2,
             'has_ai'      => false,
             'has_client_portal' => false,
             'has_white_label'   => false,
@@ -50,6 +52,7 @@ class Workspace extends Model
             'type'        => 'firm',
             'max_lawyers' => 3,
             'max_cases'   => 100,
+            'storage_gb'  => 30,
             'has_ai'      => false,
             'has_client_portal' => false,
             'has_white_label'   => false,
@@ -60,6 +63,7 @@ class Workspace extends Model
             'type'        => 'firm',
             'max_lawyers' => 10,
             'max_cases'   => 500,
+            'storage_gb'  => 100,
             'has_ai'      => true,
             'has_client_portal' => false,
             'has_white_label'   => false,
@@ -70,6 +74,7 @@ class Workspace extends Model
             'type'        => 'firm',
             'max_lawyers' => -1,
             'max_cases'   => -1,
+            'storage_gb'  => -1,
             'has_ai'      => true,
             'has_client_portal' => true,
             'has_white_label'   => true,
@@ -81,6 +86,7 @@ class Workspace extends Model
             'type'        => 'solo',
             'max_lawyers' => 1,
             'max_cases'   => 20,
+            'storage_gb'  => 2,
             'has_ai'      => false,
             'has_client_portal' => false,
             'has_white_label'   => false,
@@ -88,20 +94,22 @@ class Workspace extends Model
         ],
         'solo_starter' => [
             'label'       => 'Solo Starter',
-            'price'       => 97,
+            'price'       => 89,
             'type'        => 'solo',
             'max_lawyers' => 1,
             'max_cases'   => 50,
+            'storage_gb'  => 5,
             'has_ai'      => false,
             'has_client_portal' => false,
             'has_white_label'   => false,
         ],
         'solo_pro' => [
             'label'       => 'Solo Pro',
-            'price'       => 197,
+            'price'       => 139,
             'type'        => 'solo',
             'max_lawyers' => 1,
             'max_cases'   => -1,
+            'storage_gb'  => 20,
             'has_ai'      => true,
             'has_client_portal' => false,
             'has_white_label'   => false,
@@ -181,6 +189,29 @@ class Workspace extends Model
             || $this->cases()->whereNotIn('status', ['closed_won', 'closed_lost'])->count() < $this->max_cases;
     }
 
+    public function canUploadFile(int $fileSizeBytes): bool {
+        if ($this->storage_gb === -1) return true;
+        $limitMb = $this->storage_gb * 1024;
+        $fileMb  = $fileSizeBytes / (1024 * 1024);
+        return ($this->storage_used_mb + $fileMb) <= $limitMb;
+    }
+
+    public function addStorageUsed(int $fileSizeBytes): void {
+        $mb = $fileSizeBytes / (1024 * 1024);
+        $this->increment('storage_used_mb', (int) ceil($mb));
+    }
+
+    public function removeStorageUsed(int $fileSizeBytes): void {
+        $mb = $fileSizeBytes / (1024 * 1024);
+        $this->decrement('storage_used_mb', (int) ceil($mb));
+    }
+
+    public function storageUsedPercent(): int {
+        if ($this->storage_gb === -1) return 0;
+        $limitMb = $this->storage_gb * 1024;
+        return $limitMb > 0 ? (int) min(100, round(($this->storage_used_mb / $limitMb) * 100)) : 0;
+    }
+
     public function applyPlanLimits(string $plan): void {
         $config = self::PLANS[$plan] ?? self::PLANS['starter'];
         $this->update([
@@ -188,6 +219,7 @@ class Workspace extends Model
             'plan_status'       => 'active',
             'max_lawyers'       => $config['max_lawyers'],
             'max_cases'         => $config['max_cases'],
+            'storage_gb'        => $config['storage_gb'],
             'has_ai'            => $config['has_ai'],
             'has_client_portal' => $config['has_client_portal'],
             'has_white_label'   => $config['has_white_label'],
