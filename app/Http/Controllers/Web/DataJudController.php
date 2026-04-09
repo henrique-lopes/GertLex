@@ -63,7 +63,7 @@ class DataJudController extends Controller
                 'tribunal'   => $src['tribunal'] ?? null,
                 'court'      => $src['orgaoJulgador']['nome'] ?? null,
                 'filed_at'   => isset($src['dataAjuizamento'])
-                    ? substr($src['dataAjuizamento'], 0, 10)
+                    ? date('Y-m-d', strtotime($src['dataAjuizamento']))
                     : null,
                 'subject'    => collect($src['assuntos'] ?? [])->pluck('nome')->implode(', '),
             ];
@@ -82,7 +82,7 @@ class DataJudController extends Controller
             'title'           => 'required|string|max:255',
             'tribunal'        => 'nullable|string|max:20',
             'court'           => 'nullable|string|max:255',
-            'filed_at'        => 'nullable|date',
+            'filed_at'        => 'nullable|date_format:Y-m-d',
             'client_id'       => 'nullable|exists:clients,id',
             'opposing_party'  => 'nullable|string|max:255',
         ]);
