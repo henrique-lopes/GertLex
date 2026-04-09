@@ -23,7 +23,7 @@ class DataJudController extends Controller
             'tribunal'   => 'required|string|max:20',
         ]);
 
-        $apiKey = config('services.datajud.api_key');
+        $apiKey = config('services.datajud.key');
         $cnj    = preg_replace('/[^0-9]/', '', trim($request->cnj_number));
         $index  = $this->tribunalIndex($request->tribunal);
 
