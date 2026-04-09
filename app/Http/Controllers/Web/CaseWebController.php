@@ -22,8 +22,18 @@ class CaseWebController extends Controller
     {
         $wsId = $this->workspaceId($request);
 
+        $user     = $request->user();
+        $userRole = $user->roleIn($wsId);
+
         $query = LegalCase::where('workspace_id', $wsId)
             ->with(['client:id,name,company_name,type', 'responsible:id,name']);
+
+        // Advogado (lawyer/intern) vê apenas processos onde está atribuído
+        if (in_array($userRole, ['lawyer', 'intern'])) {
+            $query->whereHas('assignments', fn($q) =>
+                $q->where('user_id', $user->id)->where('is_active', true)
+            );
+        }
 
         if ($search = $request->get('search')) {
             $query->where(function ($q) use ($search) {

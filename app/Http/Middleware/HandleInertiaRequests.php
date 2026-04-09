@@ -35,6 +35,9 @@ class HandleInertiaRequests extends Middleware
                     'storage_used_mb' => $workspace->storage_used_mb,
                 ] : null,
                 'isSuperAdmin' => (bool) $request->user()?->is_super_admin,
+                'role'         => $workspace
+                    ? $request->user()?->roleIn($workspace->id)
+                    : null,
             ],
             'flash' => [
                 'success' => session('success'),

@@ -27,6 +27,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'workspace.active' => \App\Http\Middleware\EnsureWorkspaceActive::class,
             'super.admin'      => \App\Http\Middleware\EnsureSuperAdmin::class,
+            'role'             => \App\Http\Middleware\EnsureRole::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

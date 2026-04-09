@@ -3,7 +3,7 @@ import { Head, useForm, router } from '@inertiajs/react';
 import AppLayout from '@/Layouts/AppLayout';
 import Button from '@/Components/UI/Button';
 import Modal from '@/Components/UI/Modal';
-import { ChevronLeft, ChevronRight, Plus, Clock, MapPin, Pencil, Trash2 } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Plus, Clock, MapPin, Pencil, Trash2, Video, Monitor } from 'lucide-react';
 
 const TYPE_COLORS = {
     hearing:        { dot: 'bg-yellow-400', badge: 'text-yellow-400' },
@@ -35,23 +35,27 @@ export default function CalendarIndex({ events, cases, month }) {
 
     const form = useForm({
         title: '', type: 'hearing', starts_at: '', ends_at: '',
-        all_day: false, location: '', case_id: '', alert_1d: true, alert_5d: false, description: '',
+        all_day: false, is_virtual: false, location: '', meeting_url: '',
+        case_id: '', alert_1d: true, alert_5d: false, description: '',
     });
 
     const editForm = useForm({
         title: '', type: 'hearing', starts_at: '', ends_at: '',
-        all_day: false, location: '', status: 'pending', description: '',
+        all_day: false, is_virtual: false, location: '', meeting_url: '',
+        status: 'pending', description: '',
     });
 
     function openEdit(ev) {
         editForm.setData({
-            title:      ev.title,
-            type:       ev.type,
-            starts_at:  ev.starts_at ? ev.starts_at.slice(0, 16) : '',
-            ends_at:    ev.ends_at   ? ev.ends_at.slice(0, 16)   : '',
-            all_day:    ev.all_day ?? false,
-            location:   ev.location ?? '',
-            status:     ev.status ?? 'pending',
+            title:       ev.title,
+            type:        ev.type,
+            starts_at:   ev.starts_at ? ev.starts_at.slice(0, 16) : '',
+            ends_at:     ev.ends_at   ? ev.ends_at.slice(0, 16)   : '',
+            all_day:     ev.all_day ?? false,
+            is_virtual:  ev.is_virtual ?? false,
+            location:    ev.location ?? '',
+            meeting_url: ev.meeting_url ?? '',
+            status:      ev.status ?? 'pending',
             description: ev.description ?? '',
         });
         setEditEvent(ev);
@@ -220,12 +224,25 @@ export default function CalendarIndex({ events, cases, month }) {
                                                         </span>
                                                     </div>
                                                 )}
-                                                {ev.location && (
+                                                {ev.is_virtual && ev.meeting_url ? (
+                                                    <div className="flex items-center gap-1 mt-0.5">
+                                                        <Video size={11} className="text-[#4A7CFF]" />
+                                                        <a href={ev.meeting_url} target="_blank" rel="noopener noreferrer"
+                                                            className="text-xs text-[#4A7CFF] hover:underline truncate">
+                                                            Entrar na reunião
+                                                        </a>
+                                                    </div>
+                                                ) : ev.is_virtual ? (
+                                                    <div className="flex items-center gap-1 mt-0.5">
+                                                        <Video size={11} className="text-[#4A7CFF]" />
+                                                        <span className="text-xs text-[#4A7CFF]">Virtual</span>
+                                                    </div>
+                                                ) : ev.location ? (
                                                     <div className="flex items-center gap-1 mt-0.5">
                                                         <MapPin size={11} className="text-[#6B7491]" />
                                                         <span className="text-xs text-[#6B7491] truncate">{ev.location}</span>
                                                     </div>
-                                                )}
+                                                ) : null}
                                             </div>
                                             <div className="flex gap-1 shrink-0">
                                                 <button onClick={() => openEdit(ev)}
@@ -285,12 +302,27 @@ export default function CalendarIndex({ events, cases, month }) {
                                 className="w-full bg-[#0D0F14] border border-[#1E2330] rounded-lg px-4 py-2.5 text-sm text-[#E8EAF0] focus:outline-none focus:border-[#C9A84C]" />
                         </div>
                     </div>
-                    <div>
-                        <label className="block text-xs font-medium text-[#6B7491] uppercase tracking-wider mb-1.5">Local</label>
-                        <input value={editForm.data.location} onChange={e => editForm.setData('location', e.target.value)}
-                            className="w-full bg-[#0D0F14] border border-[#1E2330] rounded-lg px-4 py-2.5 text-sm text-[#E8EAF0] focus:outline-none focus:border-[#C9A84C]"
-                            placeholder="Ex: 2ª Vara do Trabalho — SP" />
+                    <div className="flex items-center gap-3">
+                        <label className="flex items-center gap-2 cursor-pointer">
+                            <input type="checkbox" checked={editForm.data.is_virtual} onChange={e => editForm.setData('is_virtual', e.target.checked)} className="accent-[#C9A84C]" />
+                            <span className="text-sm text-[#6B7491]">Audiência/Reunião Virtual</span>
+                        </label>
                     </div>
+                    {editForm.data.is_virtual ? (
+                        <div>
+                            <label className="block text-xs font-medium text-[#6B7491] uppercase tracking-wider mb-1.5">Link da Reunião</label>
+                            <input value={editForm.data.meeting_url} onChange={e => editForm.setData('meeting_url', e.target.value)}
+                                className="w-full bg-[#0D0F14] border border-[#1E2330] rounded-lg px-4 py-2.5 text-sm text-[#E8EAF0] focus:outline-none focus:border-[#C9A84C]"
+                                placeholder="https://meet.google.com/..." />
+                        </div>
+                    ) : (
+                        <div>
+                            <label className="block text-xs font-medium text-[#6B7491] uppercase tracking-wider mb-1.5">Local</label>
+                            <input value={editForm.data.location} onChange={e => editForm.setData('location', e.target.value)}
+                                className="w-full bg-[#0D0F14] border border-[#1E2330] rounded-lg px-4 py-2.5 text-sm text-[#E8EAF0] focus:outline-none focus:border-[#C9A84C]"
+                                placeholder="Ex: 2ª Vara do Trabalho — SP" />
+                        </div>
+                    )}
                     <div className="flex gap-3 pt-2">
                         <Button type="submit" disabled={editForm.processing}>Salvar</Button>
                         <Button type="button" variant="secondary" onClick={() => setEditEvent(null)}>Cancelar</Button>
@@ -337,12 +369,27 @@ export default function CalendarIndex({ events, cases, month }) {
                                 className="w-full bg-[#0D0F14] border border-[#1E2330] rounded-lg px-4 py-2.5 text-sm text-[#E8EAF0] focus:outline-none focus:border-[#C9A84C]" />
                         </div>
                     </div>
-                    <div>
-                        <label className="block text-xs font-medium text-[#6B7491] uppercase tracking-wider mb-1.5">Local</label>
-                        <input value={form.data.location} onChange={e => form.setData('location', e.target.value)}
-                            className="w-full bg-[#0D0F14] border border-[#1E2330] rounded-lg px-4 py-2.5 text-sm text-[#E8EAF0] focus:outline-none focus:border-[#C9A84C]"
-                            placeholder="Ex: 2ª Vara do Trabalho — SP" />
+                    <div className="flex items-center gap-3">
+                        <label className="flex items-center gap-2 cursor-pointer">
+                            <input type="checkbox" checked={form.data.is_virtual} onChange={e => form.setData('is_virtual', e.target.checked)} className="accent-[#C9A84C]" />
+                            <span className="text-sm text-[#6B7491]">Audiência/Reunião Virtual</span>
+                        </label>
                     </div>
+                    {form.data.is_virtual ? (
+                        <div>
+                            <label className="block text-xs font-medium text-[#6B7491] uppercase tracking-wider mb-1.5">Link da Reunião</label>
+                            <input value={form.data.meeting_url} onChange={e => form.setData('meeting_url', e.target.value)}
+                                className="w-full bg-[#0D0F14] border border-[#1E2330] rounded-lg px-4 py-2.5 text-sm text-[#E8EAF0] focus:outline-none focus:border-[#C9A84C]"
+                                placeholder="https://meet.google.com/..." />
+                        </div>
+                    ) : (
+                        <div>
+                            <label className="block text-xs font-medium text-[#6B7491] uppercase tracking-wider mb-1.5">Local</label>
+                            <input value={form.data.location} onChange={e => form.setData('location', e.target.value)}
+                                className="w-full bg-[#0D0F14] border border-[#1E2330] rounded-lg px-4 py-2.5 text-sm text-[#E8EAF0] focus:outline-none focus:border-[#C9A84C]"
+                                placeholder="Ex: 2ª Vara do Trabalho — SP" />
+                        </div>
+                    )}
                     <div className="flex items-center gap-4">
                         <label className="flex items-center gap-2 cursor-pointer">
                             <input type="checkbox" checked={form.data.alert_1d} onChange={e => form.setData('alert_1d', e.target.checked)} className="accent-[#C9A84C]" />

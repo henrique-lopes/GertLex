@@ -4,7 +4,13 @@ import AppLayout from '@/Layouts/AppLayout';
 import Badge from '@/Components/UI/Badge';
 import Button from '@/Components/UI/Button';
 import EmptyState from '@/Components/UI/EmptyState';
-import { Plus, Search, Filter, Briefcase, ChevronLeft, ChevronRight } from 'lucide-react';
+import Modal from '@/Components/UI/Modal';
+import { Plus, Search, Filter, Briefcase, ChevronLeft, ChevronRight, Download, Loader2, CheckCircle, AlertCircle } from 'lucide-react';
+
+const TRIBUNAIS = [
+    'TJSP','TJRJ','TJMG','TJRS','TJPR','TJSC','TJBA','TJPE','TJCE','TJGO',
+    'TRT2','TRT15','STJ','STF',
+];
 
 function formatCurrency(v) {
     return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 }).format(v ?? 0);
@@ -31,6 +37,69 @@ export default function CasesIndex({ cases, lawyers, filters }) {
     const [status, setStatus] = useState(filters?.status ?? '');
     const [lawyer, setLawyer] = useState(filters?.lawyer ?? '');
 
+    // DataJud modal state
+    const [datajudOpen, setDatajudOpen] = useState(false);
+    const [oabNumber, setOabNumber]     = useState('');
+    const [oabState, setOabState]       = useState('SP');
+    const [tribunal, setTribunal]       = useState('TJSP');
+    const [searching, setSearching]     = useState(false);
+    const [results, setResults]         = useState(null);
+    const [importing, setImporting]     = useState(null);
+    const [imported, setImported]       = useState({});
+    const [searchError, setSearchError] = useState('');
+
+    async function searchDataJud() {
+        if (!oabNumber) return;
+        setSearching(true);
+        setResults(null);
+        setSearchError('');
+        try {
+            const res = await fetch('/datajud/buscar-oab', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content,
+                    'Accept': 'application/json',
+                },
+                body: JSON.stringify({ oab_number: oabNumber, oab_state: oabState, tribunal }),
+            });
+            const data = await res.json();
+            if (!res.ok) setSearchError(data.error ?? 'Erro ao buscar.');
+            else setResults(data.cases ?? []);
+        } catch {
+            setSearchError('Erro de conexão.');
+        } finally {
+            setSearching(false);
+        }
+    }
+
+    async function importCase(c) {
+        setImporting(c.cnj_number);
+        try {
+            const res = await fetch('/datajud/importar', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content,
+                    'Accept': 'application/json',
+                },
+                body: JSON.stringify({
+                    cnj_number:     c.cnj_number,
+                    title:          c.title,
+                    tribunal:       c.tribunal,
+                    court:          c.court,
+                    filed_at:       c.filed_at,
+                    opposing_party: c.parties?.find(p => p.type !== 'Advogado' && p.type !== 'Autor')?.name ?? '',
+                }),
+            });
+            const data = await res.json();
+            if (!res.ok) alert(data.error ?? 'Erro ao importar.');
+            else setImported(prev => ({ ...prev, [c.cnj_number]: data.uuid }));
+        } finally {
+            setImporting(null);
+        }
+    }
+
     function applyFilters(overrides = {}) {
         router.get('/processos', {
             search: overrides.search ?? search,
@@ -54,9 +123,14 @@ export default function CasesIndex({ cases, lawyers, filters }) {
                     <h1 className="text-xl font-bold text-[#E8EAF0]">Processos</h1>
                     <p className="text-sm text-[#6B7491] mt-0.5">{cases?.total ?? 0} processos cadastrados</p>
                 </div>
-                <Link href="/processos/novo">
-                    <Button><Plus size={16} /> Novo Processo</Button>
-                </Link>
+                <div className="flex gap-2">
+                    <Button variant="secondary" onClick={() => setDatajudOpen(true)}>
+                        <Download size={16} /> Importar via OAB
+                    </Button>
+                    <Link href="/processos/novo">
+                        <Button><Plus size={16} /> Novo Processo</Button>
+                    </Link>
+                </div>
             </div>
 
             {/* Filters */}
@@ -193,6 +267,79 @@ export default function CasesIndex({ cases, lawyers, filters }) {
                     </>
                 )}
             </div>
+            {/* DataJud Modal */}
+            <Modal open={datajudOpen} onClose={() => { setDatajudOpen(false); setResults(null); }} title="Importar Processos via OAB">
+                <div className="space-y-4">
+                    <div className="grid grid-cols-3 gap-3">
+                        <div className="col-span-1">
+                            <label className="block text-xs font-medium text-[#6B7491] uppercase tracking-wider mb-1.5">Número OAB *</label>
+                            <input value={oabNumber} onChange={e => setOabNumber(e.target.value)}
+                                className="w-full bg-[#0D0F14] border border-[#1E2330] rounded-lg px-3 py-2.5 text-sm text-[#E8EAF0] focus:outline-none focus:border-[#C9A84C]"
+                                placeholder="123456" />
+                        </div>
+                        <div>
+                            <label className="block text-xs font-medium text-[#6B7491] uppercase tracking-wider mb-1.5">Estado OAB *</label>
+                            <input value={oabState} onChange={e => setOabState(e.target.value.toUpperCase())}
+                                maxLength={2}
+                                className="w-full bg-[#0D0F14] border border-[#1E2330] rounded-lg px-3 py-2.5 text-sm text-[#E8EAF0] focus:outline-none focus:border-[#C9A84C]"
+                                placeholder="SP" />
+                        </div>
+                        <div>
+                            <label className="block text-xs font-medium text-[#6B7491] uppercase tracking-wider mb-1.5">Tribunal *</label>
+                            <select value={tribunal} onChange={e => setTribunal(e.target.value)}
+                                className="w-full bg-[#0D0F14] border border-[#1E2330] rounded-lg px-3 py-2.5 text-sm text-[#E8EAF0] focus:outline-none focus:border-[#C9A84C]">
+                                {TRIBUNAIS.map(t => <option key={t} value={t}>{t}</option>)}
+                            </select>
+                        </div>
+                    </div>
+
+                    <Button onClick={searchDataJud} disabled={searching || !oabNumber} className="w-full justify-center">
+                        {searching ? <><Loader2 size={15} className="animate-spin" /> Buscando...</> : <><Search size={15} /> Buscar Processos</>}
+                    </Button>
+
+                    {searchError && (
+                        <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-[#E05555]/10 border border-[#E05555]/20 text-[#E05555] text-sm">
+                            <AlertCircle size={14} /> {searchError}
+                        </div>
+                    )}
+
+                    {results !== null && results.length === 0 && (
+                        <p className="text-sm text-[#6B7491] text-center py-4">Nenhum processo encontrado para esta OAB.</p>
+                    )}
+
+                    {results && results.length > 0 && (
+                        <div className="space-y-2 max-h-80 overflow-y-auto">
+                            {results.map((c, i) => (
+                                <div key={i} className="flex items-start justify-between gap-3 p-3 bg-[#0D0F14] rounded-xl border border-[#1E2330]">
+                                    <div className="flex-1 min-w-0">
+                                        <p className="text-sm font-medium text-[#E8EAF0] truncate">{c.title}</p>
+                                        <p className="text-xs text-[#6B7491] font-mono mt-0.5">{c.cnj_number}</p>
+                                        {c.court && <p className="text-xs text-[#6B7491] mt-0.5">{c.court}</p>}
+                                    </div>
+                                    {imported[c.cnj_number] ? (
+                                        <Link href={`/processos/${imported[c.cnj_number]}`}>
+                                            <span className="flex items-center gap-1 text-xs text-[#2ECC8A] whitespace-nowrap">
+                                                <CheckCircle size={13} /> Importado
+                                            </span>
+                                        </Link>
+                                    ) : (
+                                        <button
+                                            onClick={() => importCase(c)}
+                                            disabled={importing === c.cnj_number}
+                                            className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium
+                                                bg-[#C9A84C]/15 text-[#C9A84C] hover:bg-[#C9A84C]/25 transition-colors whitespace-nowrap disabled:opacity-50">
+                                            {importing === c.cnj_number
+                                                ? <><Loader2 size={12} className="animate-spin" /> Importando...</>
+                                                : <><Download size={12} /> Importar</>
+                                            }
+                                        </button>
+                                    )}
+                                </div>
+                            ))}
+                        </div>
+                    )}
+                </div>
+            </Modal>
         </AppLayout>
     );
 }

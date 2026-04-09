@@ -136,7 +136,14 @@ function TrialBanner({ trial }) {
 export default function AppLayout({ children, title }) {
     const { auth, flash, trial } = usePage().props;
     const isSuperAdmin = auth?.isSuperAdmin;
-    const navItems = auth?.workspace?.type === 'solo' ? soloNavItems : firmNavItems;
+    const role = auth?.role;
+    const isRestricted = ['lawyer', 'intern'].includes(role);
+
+    const baseItems = auth?.workspace?.type === 'solo' ? soloNavItems : firmNavItems;
+    // Advogados e estagiários não veem Financeiro nem Equipe
+    const navItems = isRestricted
+        ? baseItems.filter(i => !['/financeiro', '/equipe'].includes(i.href))
+        : baseItems;
     const [collapsed, setCollapsed] = useState(false);
     const [mobileOpen, setMobileOpen] = useState(false);
     const { theme, toggleTheme } = useTheme();

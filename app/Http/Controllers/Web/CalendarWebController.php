@@ -48,15 +48,17 @@ class CalendarWebController extends Controller
         $wsId = $this->workspaceId($request);
 
         $data = $request->validate([
-            'title'    => 'required|string|max:255',
-            'type'     => 'required|string|max:30',
-            'starts_at'=> 'required|date',
-            'ends_at'  => 'nullable|date|after_or_equal:starts_at',
-            'all_day'  => 'boolean',
-            'location' => 'nullable|string|max:255',
-            'case_id'  => 'nullable|exists:cases,id',
-            'alert_1d' => 'boolean',
-            'alert_5d' => 'boolean',
+            'title'       => 'required|string|max:255',
+            'type'        => 'required|string|max:30',
+            'starts_at'   => 'required|date',
+            'ends_at'     => 'nullable|date|after_or_equal:starts_at',
+            'all_day'     => 'boolean',
+            'is_virtual'  => 'boolean',
+            'location'    => 'nullable|string|max:255',
+            'meeting_url' => 'nullable|string|max:500',
+            'case_id'     => 'nullable|exists:cases,id',
+            'alert_1d'    => 'boolean',
+            'alert_5d'    => 'boolean',
             'description' => 'nullable|string',
         ]);
 
@@ -79,13 +81,15 @@ class CalendarWebController extends Controller
         $event = Event::where('workspace_id', $wsId)->findOrFail($id);
 
         $data = $request->validate([
-            'title'    => 'required|string|max:255',
-            'type'     => 'required|string|max:30',
-            'starts_at'=> 'required|date',
-            'ends_at'  => 'nullable|date',
-            'all_day'  => 'boolean',
-            'location' => 'nullable|string|max:255',
-            'status'   => 'nullable|string|max:20',
+            'title'       => 'required|string|max:255',
+            'type'        => 'required|string|max:30',
+            'starts_at'   => 'required|date',
+            'ends_at'     => 'nullable|date',
+            'all_day'     => 'boolean',
+            'is_virtual'  => 'boolean',
+            'location'    => 'nullable|string|max:255',
+            'meeting_url' => 'nullable|string|max:500',
+            'status'      => 'nullable|string|max:20',
             'description' => 'nullable|string',
         ]);
 

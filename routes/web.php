@@ -15,6 +15,7 @@ use App\Http\Controllers\Web\AIWebController;
 use App\Http\Controllers\Web\SettingsWebController;
 use App\Http\Controllers\Web\PlanController;
 use App\Http\Controllers\Web\AdminController;
+use App\Http\Controllers\Web\DataJudController;
 
 // ── Super Admin ─────────────────────────────────────────────────
 Route::middleware(['auth', 'super.admin'])->prefix('admin')->name('admin.')->group(function () {
@@ -37,6 +38,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
         // Dashboard
         Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
 
+        // DataJud
+        Route::post('/datajud/buscar-oab',  [DataJudController::class, 'searchByOAB'])->name('datajud.search');
+        Route::post('/datajud/importar',    [DataJudController::class, 'importCase'])->name('datajud.import');
+
         // Processos
         Route::get('/processos',                 [CaseWebController::class, 'index'])->name('cases.index');
         Route::get('/processos/novo',            [CaseWebController::class, 'create'])->name('cases.create');
@@ -55,20 +60,24 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::put('/clientes/{uuid}',           [ClientWebController::class, 'update'])->name('clients.update');
         Route::delete('/clientes/{uuid}',        [ClientWebController::class, 'destroy'])->name('clients.destroy');
 
-        // Equipe
-        Route::get('/equipe',                    [TeamWebController::class, 'index'])->name('team.index');
-        Route::post('/equipe/convidar',          [TeamWebController::class, 'invite'])->name('team.invite');
-        Route::put('/equipe/{id}',               [TeamWebController::class, 'update'])->name('team.update');
-        Route::delete('/equipe/{id}',            [TeamWebController::class, 'remove'])->name('team.remove');
+        // Equipe — apenas owner e admin
+        Route::middleware('role:owner,admin')->group(function () {
+            Route::get('/equipe',                [TeamWebController::class, 'index'])->name('team.index');
+            Route::post('/equipe/convidar',      [TeamWebController::class, 'invite'])->name('team.invite');
+            Route::put('/equipe/{id}',           [TeamWebController::class, 'update'])->name('team.update');
+            Route::delete('/equipe/{id}',        [TeamWebController::class, 'remove'])->name('team.remove');
+        });
 
-        // Financeiro
-        Route::get('/financeiro',                    [FinanceWebController::class, 'index'])->name('finance.index');
-        Route::get('/financeiro/faturas',            [FinanceWebController::class, 'invoices'])->name('finance.invoices');
-        Route::post('/financeiro/faturas',           [FinanceWebController::class, 'storeInvoice'])->name('finance.invoices.store');
-        Route::put('/financeiro/faturas/{id}/pagar', [FinanceWebController::class, 'payInvoice'])->name('finance.invoices.pay');
-        Route::get('/financeiro/despesas',           [FinanceWebController::class, 'expenses'])->name('finance.expenses');
-        Route::post('/financeiro/despesas',          [FinanceWebController::class, 'storeExpense'])->name('finance.expenses.store');
-        Route::delete('/financeiro/despesas/{id}',   [FinanceWebController::class, 'destroyExpense'])->name('finance.expenses.destroy');
+        // Financeiro — apenas owner e admin
+        Route::middleware('role:owner,admin')->group(function () {
+            Route::get('/financeiro',                    [FinanceWebController::class, 'index'])->name('finance.index');
+            Route::get('/financeiro/faturas',            [FinanceWebController::class, 'invoices'])->name('finance.invoices');
+            Route::post('/financeiro/faturas',           [FinanceWebController::class, 'storeInvoice'])->name('finance.invoices.store');
+            Route::put('/financeiro/faturas/{id}/pagar', [FinanceWebController::class, 'payInvoice'])->name('finance.invoices.pay');
+            Route::get('/financeiro/despesas',           [FinanceWebController::class, 'expenses'])->name('finance.expenses');
+            Route::post('/financeiro/despesas',          [FinanceWebController::class, 'storeExpense'])->name('finance.expenses.store');
+            Route::delete('/financeiro/despesas/{id}',   [FinanceWebController::class, 'destroyExpense'])->name('finance.expenses.destroy');
+        });
 
         // Agenda
         Route::get('/agenda',                    [CalendarWebController::class, 'index'])->name('calendar.index');
