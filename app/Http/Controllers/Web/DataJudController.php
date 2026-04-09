@@ -34,17 +34,16 @@ class DataJudController extends Controller
             'Content-Type'  => 'application/json',
         ])->post(self::API_URL . "/api_publica_{$index}/_search", [
             'query' => [
-                'bool' => [
-                    'must' => [
-                        [
-                            'nested' => [
-                                'path'  => 'advocacia',
-                                'query' => [
-                                    'bool' => [
-                                        'must' => [
-                                            ['match' => ['advocacia.OAB'    => $oab]],
-                                            ['match' => ['advocacia.estado' => $state]],
-                                        ],
+                'nested' => [
+                    'path'  => 'partes',
+                    'query' => [
+                        'nested' => [
+                            'path'  => 'partes.advocacia',
+                            'query' => [
+                                'bool' => [
+                                    'must' => [
+                                        ['match' => ['partes.advocacia.OAB'    => $oab]],
+                                        ['match' => ['partes.advocacia.estado' => $state]],
                                     ],
                                 ],
                             ],
@@ -56,7 +55,7 @@ class DataJudController extends Controller
             '_source' => [
                 'numeroProcesso', 'classe.nome', 'assuntos',
                 'orgaoJulgador.nome', 'tribunal', 'dataAjuizamento',
-                'partes', 'advocacia',
+                'partes',
             ],
         ]);
 
@@ -79,8 +78,8 @@ class DataJudController extends Controller
                     ? substr($src['dataAjuizamento'], 0, 10)
                     : null,
                 'parties'    => collect($src['partes'] ?? [])->map(fn($p) => [
-                    'name' => $p['nome'] ?? '',
-                    'type' => $p['tipo'] ?? '',
+                    'name' => $p['nome']  ?? '',
+                    'type' => $p['polo']  ?? $p['tipo'] ?? '',
                 ])->values(),
             ];
         });
