@@ -1,10 +1,9 @@
 import { useState } from 'react';
 import { Head, useForm, router } from '@inertiajs/react';
 import AppLayout from '@/Layouts/AppLayout';
-import Badge from '@/Components/UI/Badge';
 import Button from '@/Components/UI/Button';
 import Modal from '@/Components/UI/Modal';
-import { ChevronLeft, ChevronRight, Plus, Clock, MapPin } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Plus, Clock, MapPin, Pencil, Trash2 } from 'lucide-react';
 
 const TYPE_COLORS = {
     hearing:        { dot: 'bg-yellow-400', badge: 'text-yellow-400' },
@@ -32,11 +31,43 @@ export default function CalendarIndex({ events, cases, month }) {
     });
     const [selectedDay, setSelectedDay]   = useState(null);
     const [createOpen, setCreateOpen]     = useState(false);
+    const [editEvent, setEditEvent]       = useState(null);
 
     const form = useForm({
         title: '', type: 'hearing', starts_at: '', ends_at: '',
         all_day: false, location: '', case_id: '', alert_1d: true, alert_5d: false, description: '',
     });
+
+    const editForm = useForm({
+        title: '', type: 'hearing', starts_at: '', ends_at: '',
+        all_day: false, location: '', status: 'pending', description: '',
+    });
+
+    function openEdit(ev) {
+        editForm.setData({
+            title:      ev.title,
+            type:       ev.type,
+            starts_at:  ev.starts_at ? ev.starts_at.slice(0, 16) : '',
+            ends_at:    ev.ends_at   ? ev.ends_at.slice(0, 16)   : '',
+            all_day:    ev.all_day ?? false,
+            location:   ev.location ?? '',
+            status:     ev.status ?? 'pending',
+            description: ev.description ?? '',
+        });
+        setEditEvent(ev);
+    }
+
+    function submitEdit(e) {
+        e.preventDefault();
+        editForm.put(route('calendar.update', editEvent.id), {
+            onSuccess: () => setEditEvent(null),
+        });
+    }
+
+    function deleteEvent(ev) {
+        if (!confirm(`Remover "${ev.title}"?`)) return;
+        router.delete(route('calendar.destroy', ev.id));
+    }
 
     const { year, month: mon } = currentMonth;
     const days    = daysInMonth(year, mon);
@@ -196,6 +227,16 @@ export default function CalendarIndex({ events, cases, month }) {
                                                     </div>
                                                 )}
                                             </div>
+                                            <div className="flex gap-1 shrink-0">
+                                                <button onClick={() => openEdit(ev)}
+                                                    className="p-1.5 rounded-lg text-[#6B7491] hover:text-[#C9A84C] hover:bg-[#C9A84C]/10 transition-colors">
+                                                    <Pencil size={13} />
+                                                </button>
+                                                <button onClick={() => deleteEvent(ev)}
+                                                    className="p-1.5 rounded-lg text-[#6B7491] hover:text-[#E05555] hover:bg-[#E05555]/10 transition-colors">
+                                                    <Trash2 size={13} />
+                                                </button>
+                                            </div>
                                         </div>
                                     </div>
                                 );
@@ -204,6 +245,58 @@ export default function CalendarIndex({ events, cases, month }) {
                     </div>
                 </div>
             </div>
+
+            {/* Edit event modal */}
+            <Modal open={!!editEvent} onClose={() => setEditEvent(null)} title="Editar Evento">
+                <form onSubmit={submitEdit} className="space-y-4">
+                    <div>
+                        <label className="block text-xs font-medium text-[#6B7491] uppercase tracking-wider mb-1.5">Título *</label>
+                        <input value={editForm.data.title} onChange={e => editForm.setData('title', e.target.value)}
+                            className="w-full bg-[#0D0F14] border border-[#1E2330] rounded-lg px-4 py-2.5 text-sm text-[#E8EAF0] focus:outline-none focus:border-[#C9A84C]" />
+                        {editForm.errors.title && <p className="text-xs text-[#E05555] mt-1">{editForm.errors.title}</p>}
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                        <div>
+                            <label className="block text-xs font-medium text-[#6B7491] uppercase tracking-wider mb-1.5">Tipo *</label>
+                            <select value={editForm.data.type} onChange={e => editForm.setData('type', e.target.value)}
+                                className="w-full bg-[#0D0F14] border border-[#1E2330] rounded-lg px-4 py-2.5 text-sm text-[#E8EAF0] focus:outline-none focus:border-[#C9A84C]">
+                                {Object.entries(TYPE_LABELS).map(([v,l]) => <option key={v} value={v}>{l}</option>)}
+                            </select>
+                        </div>
+                        <div>
+                            <label className="block text-xs font-medium text-[#6B7491] uppercase tracking-wider mb-1.5">Status</label>
+                            <select value={editForm.data.status} onChange={e => editForm.setData('status', e.target.value)}
+                                className="w-full bg-[#0D0F14] border border-[#1E2330] rounded-lg px-4 py-2.5 text-sm text-[#E8EAF0] focus:outline-none focus:border-[#C9A84C]">
+                                <option value="pending">Pendente</option>
+                                <option value="done">Concluído</option>
+                                <option value="cancelled">Cancelado</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                        <div>
+                            <label className="block text-xs font-medium text-[#6B7491] uppercase tracking-wider mb-1.5">Início *</label>
+                            <input type="datetime-local" value={editForm.data.starts_at} onChange={e => editForm.setData('starts_at', e.target.value)}
+                                className="w-full bg-[#0D0F14] border border-[#1E2330] rounded-lg px-4 py-2.5 text-sm text-[#E8EAF0] focus:outline-none focus:border-[#C9A84C]" />
+                        </div>
+                        <div>
+                            <label className="block text-xs font-medium text-[#6B7491] uppercase tracking-wider mb-1.5">Fim</label>
+                            <input type="datetime-local" value={editForm.data.ends_at} onChange={e => editForm.setData('ends_at', e.target.value)}
+                                className="w-full bg-[#0D0F14] border border-[#1E2330] rounded-lg px-4 py-2.5 text-sm text-[#E8EAF0] focus:outline-none focus:border-[#C9A84C]" />
+                        </div>
+                    </div>
+                    <div>
+                        <label className="block text-xs font-medium text-[#6B7491] uppercase tracking-wider mb-1.5">Local</label>
+                        <input value={editForm.data.location} onChange={e => editForm.setData('location', e.target.value)}
+                            className="w-full bg-[#0D0F14] border border-[#1E2330] rounded-lg px-4 py-2.5 text-sm text-[#E8EAF0] focus:outline-none focus:border-[#C9A84C]"
+                            placeholder="Ex: 2ª Vara do Trabalho — SP" />
+                    </div>
+                    <div className="flex gap-3 pt-2">
+                        <Button type="submit" disabled={editForm.processing}>Salvar</Button>
+                        <Button type="button" variant="secondary" onClick={() => setEditEvent(null)}>Cancelar</Button>
+                    </div>
+                </form>
+            </Modal>
 
             {/* Create event modal */}
             <Modal open={createOpen} onClose={() => setCreateOpen(false)} title="Novo Evento">

@@ -83,9 +83,18 @@ class CaseWebController extends Controller
 
     public function store(Request $request)
     {
-        $this->authorize('create', \App\Models\LegalCase::class);
+        $wsId      = $this->workspaceId($request);
+        $workspace = $request->user()->currentWorkspace;
 
-        $wsId = $this->workspaceId($request);
+        if ($workspace->isBlocked()) {
+            return redirect()->route('plans.index')
+                ->with('error', 'Seu plano está bloqueado. Escolha um plano para continuar.');
+        }
+
+        if (!$workspace->canAddCase()) {
+            return redirect()->back()
+                ->with('error', "Limite de {$workspace->max_cases} processos atingido. Faça upgrade do plano.");
+        }
 
         $data = $request->validate([
             'title'               => 'required|string|max:255',
