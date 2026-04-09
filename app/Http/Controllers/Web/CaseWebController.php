@@ -185,9 +185,9 @@ class CaseWebController extends Controller
             ->map(fn($m) => ['id' => $m->user_id, 'name' => $m->user->name ?? '', 'oab' => $m->user->oab_number ?? '']);
 
         return Inertia::render('Cases/Edit', [
-            'case'    => $case,
-            'clients' => $clients,
-            'lawyers' => $lawyers,
+            'legalCase' => $case,
+            'clients'   => $clients,
+            'lawyers'   => $lawyers,
         ]);
     }
 
