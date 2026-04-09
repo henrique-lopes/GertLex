@@ -14,19 +14,17 @@ class DataJudController extends Controller
     private const API_URL = 'https://api-publica.datajud.cnj.jus.br';
 
     /**
-     * Busca processos pelo número OAB do advogado via DataJud CNJ.
+     * Busca processo pelo número CNJ via DataJud.
      */
     public function searchByOAB(Request $request)
     {
         $request->validate([
-            'oab_number'   => 'required|string|max:20',
-            'oab_state'    => 'required|string|size:2',
-            'tribunal'     => 'required|string|max:20',
+            'cnj_number' => 'required|string|max:50',
+            'tribunal'   => 'required|string|max:20',
         ]);
 
         $apiKey = config('services.datajud.api_key');
-        $oab    = strtoupper(trim($request->oab_number));
-        $state  = strtoupper($request->oab_state);
+        $cnj    = preg_replace('/[^0-9]/', '', trim($request->cnj_number));
         $index  = $this->tribunalIndex($request->tribunal);
 
         $response = Http::withHeaders([
@@ -34,38 +32,28 @@ class DataJudController extends Controller
             'Content-Type'  => 'application/json',
         ])->post(self::API_URL . "/api_publica_{$index}/_search", [
             'query' => [
-                'nested' => [
-                    'path'  => 'partes',
-                    'query' => [
-                        'nested' => [
-                            'path'  => 'partes.advocacia',
-                            'query' => [
-                                'bool' => [
-                                    'must' => [
-                                        ['match' => ['partes.advocacia.OAB'    => $oab]],
-                                        ['match' => ['partes.advocacia.estado' => $state]],
-                                    ],
-                                ],
-                            ],
-                        ],
-                    ],
+                'match' => [
+                    'numeroProcesso' => $cnj,
                 ],
             ],
-            'size' => 50,
+            'size' => 10,
             '_source' => [
-                'numeroProcesso', 'classe.nome', 'assuntos',
-                'orgaoJulgador.nome', 'tribunal', 'dataAjuizamento',
-                'partes',
+                'numeroProcesso', 'classe', 'assuntos',
+                'orgaoJulgador', 'tribunal', 'dataAjuizamento', 'grau',
             ],
         ]);
 
         if (!$response->successful()) {
             return response()->json([
-                'error' => 'Erro ao consultar DataJud. Verifique a chave de API.',
+                'error' => 'Erro ao consultar DataJud. Verifique a chave de API e o tribunal selecionado.',
             ], 422);
         }
 
         $hits = $response->json('hits.hits', []);
+
+        if (empty($hits)) {
+            return response()->json(['cases' => [], 'message' => 'Nenhum processo encontrado para este número no tribunal selecionado.']);
+        }
 
         $cases = collect($hits)->map(function ($hit) {
             $src = $hit['_source'];
@@ -77,10 +65,7 @@ class DataJudController extends Controller
                 'filed_at'   => isset($src['dataAjuizamento'])
                     ? substr($src['dataAjuizamento'], 0, 10)
                     : null,
-                'parties'    => collect($src['partes'] ?? [])->map(fn($p) => [
-                    'name' => $p['nome']  ?? '',
-                    'type' => $p['polo']  ?? $p['tipo'] ?? '',
-                ])->values(),
+                'subject'    => collect($src['assuntos'] ?? [])->pluck('nome')->implode(', '),
             ];
         });
 

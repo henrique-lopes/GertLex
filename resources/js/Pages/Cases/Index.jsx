@@ -39,20 +39,21 @@ export default function CasesIndex({ cases, lawyers, filters }) {
 
     // DataJud modal state
     const [datajudOpen, setDatajudOpen] = useState(false);
-    const [oabNumber, setOabNumber]     = useState('');
-    const [oabState, setOabState]       = useState('SP');
+    const [cnjNumber, setCnjNumber]     = useState('');
     const [tribunal, setTribunal]       = useState('TJSP');
     const [searching, setSearching]     = useState(false);
     const [results, setResults]         = useState(null);
     const [importing, setImporting]     = useState(null);
     const [imported, setImported]       = useState({});
     const [searchError, setSearchError] = useState('');
+    const [searchMsg, setSearchMsg]     = useState('');
 
     async function searchDataJud() {
-        if (!oabNumber) return;
+        if (!cnjNumber.trim()) return;
         setSearching(true);
         setResults(null);
         setSearchError('');
+        setSearchMsg('');
         try {
             const res = await fetch('/datajud/buscar-oab', {
                 method: 'POST',
@@ -61,11 +62,14 @@ export default function CasesIndex({ cases, lawyers, filters }) {
                     'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content,
                     'Accept': 'application/json',
                 },
-                body: JSON.stringify({ oab_number: oabNumber, oab_state: oabState, tribunal }),
+                body: JSON.stringify({ cnj_number: cnjNumber, tribunal }),
             });
             const data = await res.json();
             if (!res.ok) setSearchError(data.error ?? 'Erro ao buscar.');
-            else setResults(data.cases ?? []);
+            else {
+                setResults(data.cases ?? []);
+                if (data.message) setSearchMsg(data.message);
+            }
         } catch {
             setSearchError('Erro de conexão.');
         } finally {
@@ -125,7 +129,7 @@ export default function CasesIndex({ cases, lawyers, filters }) {
                 </div>
                 <div className="flex gap-2">
                     <Button variant="secondary" onClick={() => setDatajudOpen(true)}>
-                        <Download size={16} /> Importar via OAB
+                        <Download size={16} /> Importar via CNJ
                     </Button>
                     <Link href="/processos/novo">
                         <Button><Plus size={16} /> Novo Processo</Button>
@@ -268,21 +272,20 @@ export default function CasesIndex({ cases, lawyers, filters }) {
                 )}
             </div>
             {/* DataJud Modal */}
-            <Modal open={datajudOpen} onClose={() => { setDatajudOpen(false); setResults(null); }} title="Importar Processos via OAB">
+            <Modal open={datajudOpen} onClose={() => { setDatajudOpen(false); setResults(null); setCnjNumber(''); }} title="Importar Processo via DataJud CNJ">
                 <div className="space-y-4">
+                    <p className="text-xs text-[#6B7491]">
+                        Informe o número CNJ do processo (com ou sem formatação) e selecione o tribunal.
+                    </p>
                     <div className="grid grid-cols-3 gap-3">
-                        <div className="col-span-1">
-                            <label className="block text-xs font-medium text-[#6B7491] uppercase tracking-wider mb-1.5">Número OAB *</label>
-                            <input value={oabNumber} onChange={e => setOabNumber(e.target.value)}
+                        <div className="col-span-2">
+                            <label className="block text-xs font-medium text-[#6B7491] uppercase tracking-wider mb-1.5">Número CNJ *</label>
+                            <input
+                                value={cnjNumber}
+                                onChange={e => setCnjNumber(e.target.value)}
+                                onKeyDown={e => e.key === 'Enter' && searchDataJud()}
                                 className="w-full bg-[#0D0F14] border border-[#1E2330] rounded-lg px-3 py-2.5 text-sm text-[#E8EAF0] focus:outline-none focus:border-[#C9A84C]"
-                                placeholder="123456" />
-                        </div>
-                        <div>
-                            <label className="block text-xs font-medium text-[#6B7491] uppercase tracking-wider mb-1.5">Estado OAB *</label>
-                            <input value={oabState} onChange={e => setOabState(e.target.value.toUpperCase())}
-                                maxLength={2}
-                                className="w-full bg-[#0D0F14] border border-[#1E2330] rounded-lg px-3 py-2.5 text-sm text-[#E8EAF0] focus:outline-none focus:border-[#C9A84C]"
-                                placeholder="SP" />
+                                placeholder="0000001-23.2020.8.26.0100" />
                         </div>
                         <div>
                             <label className="block text-xs font-medium text-[#6B7491] uppercase tracking-wider mb-1.5">Tribunal *</label>
@@ -293,8 +296,8 @@ export default function CasesIndex({ cases, lawyers, filters }) {
                         </div>
                     </div>
 
-                    <Button onClick={searchDataJud} disabled={searching || !oabNumber} className="w-full justify-center">
-                        {searching ? <><Loader2 size={15} className="animate-spin" /> Buscando...</> : <><Search size={15} /> Buscar Processos</>}
+                    <Button onClick={searchDataJud} disabled={searching || !cnjNumber.trim()} className="w-full justify-center">
+                        {searching ? <><Loader2 size={15} className="animate-spin" /> Buscando...</> : <><Search size={15} /> Buscar Processo</>}
                     </Button>
 
                     {searchError && (
@@ -304,7 +307,9 @@ export default function CasesIndex({ cases, lawyers, filters }) {
                     )}
 
                     {results !== null && results.length === 0 && (
-                        <p className="text-sm text-[#6B7491] text-center py-4">Nenhum processo encontrado para esta OAB.</p>
+                        <p className="text-sm text-[#6B7491] text-center py-4">
+                            {searchMsg || 'Nenhum processo encontrado. Verifique o número e o tribunal.'}
+                        </p>
                     )}
 
                     {results && results.length > 0 && (
@@ -315,6 +320,7 @@ export default function CasesIndex({ cases, lawyers, filters }) {
                                         <p className="text-sm font-medium text-[#E8EAF0] truncate">{c.title}</p>
                                         <p className="text-xs text-[#6B7491] font-mono mt-0.5">{c.cnj_number}</p>
                                         {c.court && <p className="text-xs text-[#6B7491] mt-0.5">{c.court}</p>}
+                                        {c.subject && <p className="text-xs text-[#6B7491] mt-0.5 truncate">{c.subject}</p>}
                                     </div>
                                     {imported[c.cnj_number] ? (
                                         <Link href={`/processos/${imported[c.cnj_number]}`}>
