@@ -128,8 +128,8 @@ export default function CasesIndex({ cases, lawyers, filters }) {
                     <p className="text-sm text-[#6B7491] mt-0.5">{cases?.total ?? 0} processos cadastrados</p>
                 </div>
                 <div className="flex gap-2">
-                    <Button variant="secondary" onClick={() => setDatajudOpen(true)}>
-                        <Download size={16} /> Importar via CNJ
+                    <Button onClick={() => setDatajudOpen(true)}>
+                        <Download size={16} /> Importar via DataJud
                     </Button>
                     <Link href="/processos/novo">
                         <Button><Plus size={16} /> Novo Processo</Button>
