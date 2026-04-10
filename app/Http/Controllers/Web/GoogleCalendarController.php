@@ -39,10 +39,19 @@ class GoogleCalendarController extends Controller
             return redirect()->route('calendar.index')->with('error', 'Erro ao obter tokens do Google.');
         }
 
+        // Busca o email da conta Google conectada
+        $googleEmail = null;
+        try {
+            $profile = \Illuminate\Support\Facades\Http::withToken($tokens['access_token'])
+                ->get('https://www.googleapis.com/oauth2/v2/userinfo');
+            $googleEmail = $profile->json('email');
+        } catch (\Throwable $e) {}
+
         $request->user()->update([
             'google_access_token'     => $tokens['access_token'],
             'google_refresh_token'    => $tokens['refresh_token'] ?? $request->user()->google_refresh_token,
             'google_token_expires_at' => now()->addSeconds(($tokens['expires_in'] ?? 3600) - 60),
+            'google_email'            => $googleEmail,
         ]);
 
         // Importa eventos existentes do Google imediatamente

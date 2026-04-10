@@ -26,7 +26,7 @@ function firstDayOfMonth(year, month) {
     return new Date(year, month, 1).getDay();
 }
 
-export default function CalendarIndex({ events, cases, month, googleConnected }) {
+export default function CalendarIndex({ events, cases, month, googleConnected, googleEmail }) {
     const [currentMonth, setCurrentMonth] = useState(() => {
         const [y, m] = (month ?? '').split('-').map(Number);
         return { year: y || new Date().getFullYear(), month: (m || new Date().getMonth() + 1) - 1 };
@@ -130,9 +130,11 @@ export default function CalendarIndex({ events, cases, month, googleConnected })
                             <a
                                 href="/agenda/google/sincronizar"
                                 className="flex items-center gap-1.5 px-3 py-2 text-xs font-medium rounded-lg bg-[#13161E] border border-[#1E2330] text-[#2ECC8A] hover:bg-[#1A1E29] transition-colors"
-                                title="Sincronizar com Google Agenda"
+                                title={googleEmail ? `Conectado como ${googleEmail}` : 'Sincronizar com Google Agenda'}
                             >
-                                <RefreshCw size={14} /> Sincronizar Google
+                                <RefreshCw size={14} />
+                                <span>Sincronizar Google</span>
+                                {googleEmail && <span className="text-[#6B7491] font-normal">({googleEmail})</span>}
                             </a>
                             <a
                                 href="/agenda/google/desconectar"

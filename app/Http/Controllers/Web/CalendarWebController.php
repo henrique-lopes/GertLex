@@ -40,10 +40,11 @@ class CalendarWebController extends Controller
         $user = $request->user();
 
         return Inertia::render('Calendar/Index', [
-            'events'           => $events,
-            'cases'            => $cases,
-            'month'            => $month,
-            'googleConnected'  => (bool) $user->google_access_token,
+            'events'          => $events,
+            'cases'           => $cases,
+            'month'           => $month,
+            'googleConnected' => (bool) $user->google_access_token,
+            'googleEmail'     => $user->google_email,
         ]);
     }
 
