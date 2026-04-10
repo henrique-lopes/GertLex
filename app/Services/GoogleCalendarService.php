@@ -34,7 +34,7 @@ class GoogleCalendarService
             'client_id'     => $this->clientId,
             'redirect_uri'  => $this->redirectUri,
             'response_type' => 'code',
-            'scope'         => 'https://www.googleapis.com/auth/calendar',
+            'scope'         => 'https://www.googleapis.com/auth/calendar https://www.googleapis.com/auth/userinfo.email',
             'access_type'   => 'offline',
             'prompt'        => 'consent',
             'state'         => $state,
