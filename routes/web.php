@@ -16,6 +16,7 @@ use App\Http\Controllers\Web\SettingsWebController;
 use App\Http\Controllers\Web\PlanController;
 use App\Http\Controllers\Web\AdminController;
 use App\Http\Controllers\Web\DataJudController;
+use App\Http\Controllers\Web\GoogleCalendarController;
 
 // ── Super Admin ─────────────────────────────────────────────────
 Route::middleware(['auth', 'super.admin'])->prefix('admin')->name('admin.')->group(function () {
@@ -31,6 +32,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // Planos (acessível mesmo com workspace bloqueado)
     Route::get('/planos',          [PlanController::class, 'index'])->name('plans.index');
     Route::post('/planos/upgrade', [PlanController::class, 'requestUpgrade'])->name('plans.upgrade');
+
+    // Google OAuth callback (sem workspace.active)
+    Route::get('/auth/google/callback', [GoogleCalendarController::class, 'callback'])->name('google.calendar.callback');
 
     // Demais rotas — verificam workspace ativo
     Route::middleware('workspace.active')->group(function () {
@@ -85,6 +89,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('/agenda',                   [CalendarWebController::class, 'store'])->name('calendar.store');
         Route::put('/agenda/{id}',               [CalendarWebController::class, 'update'])->name('calendar.update');
         Route::delete('/agenda/{id}',            [CalendarWebController::class, 'destroy'])->name('calendar.destroy');
+
+        // Google Calendar
+        Route::get('/agenda/google/conectar',    [GoogleCalendarController::class, 'redirect'])->name('google.calendar.redirect');
+        Route::get('/agenda/google/desconectar', [GoogleCalendarController::class, 'disconnect'])->name('google.calendar.disconnect');
+        Route::post('/agenda/google/sincronizar',[GoogleCalendarController::class, 'sync'])->name('google.calendar.sync');
 
         // Documentos
         Route::get('/documentos',                [DocumentWebController::class, 'index'])->name('documents.index');

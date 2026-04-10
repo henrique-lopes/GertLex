@@ -15,9 +15,10 @@ class User extends Authenticatable
         'uuid', 'name', 'email', 'password',
         'oab_number', 'oab_state', 'cpf', 'phone', 'avatar_url',
         'birth_date', 'specialties', 'current_workspace_id', 'is_super_admin',
+        'google_access_token', 'google_refresh_token', 'google_token_expires_at', 'google_calendar_id',
     ];
 
-    protected $hidden = ['password', 'remember_token'];
+    protected $hidden = ['password', 'remember_token', 'google_access_token', 'google_refresh_token'];
 
     protected $casts = [
         'email_verified_at' => 'datetime',

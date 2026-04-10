@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Web;
 use App\Http\Controllers\Controller;
 use App\Models\Event;
 use App\Models\LegalCase;
+use App\Services\GoogleCalendarService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Inertia\Inertia;
@@ -36,10 +37,13 @@ class CalendarWebController extends Controller
             ->orderBy('title')
             ->get(['id', 'title', 'cnj_number']);
 
+        $user = $request->user();
+
         return Inertia::render('Calendar/Index', [
-            'events'  => $events,
-            'cases'   => $cases,
-            'month'   => $month,
+            'events'           => $events,
+            'cases'            => $cases,
+            'month'            => $month,
+            'googleConnected'  => (bool) $user->google_access_token,
         ]);
     }
 
@@ -62,7 +66,7 @@ class CalendarWebController extends Controller
             'description' => 'nullable|string',
         ]);
 
-        Event::create([
+        $event = Event::create([
             ...$data,
             'uuid'         => Str::uuid(),
             'workspace_id' => $wsId,
@@ -70,6 +74,11 @@ class CalendarWebController extends Controller
             'status'       => 'pending',
             'alert_sent'   => false,
         ]);
+
+        // Sincroniza com Google Calendar se conectado
+        if ($request->user()->google_access_token) {
+            app(GoogleCalendarService::class)->pushEvent($request->user(), $event);
+        }
 
         return redirect()->route('calendar.index')
             ->with('success', 'Evento criado com sucesso!');
@@ -95,6 +104,11 @@ class CalendarWebController extends Controller
 
         $event->update($data);
 
+        // Sincroniza com Google Calendar se conectado
+        if ($request->user()->google_access_token) {
+            app(GoogleCalendarService::class)->pushEvent($request->user(), $event->fresh());
+        }
+
         return redirect()->route('calendar.index')
             ->with('success', 'Evento atualizado!');
     }
@@ -103,6 +117,11 @@ class CalendarWebController extends Controller
     {
         $wsId  = $this->workspaceId($request);
         $event = Event::where('workspace_id', $wsId)->findOrFail($id);
+        // Remove do Google Calendar se conectado
+        if ($request->user()->google_access_token) {
+            app(GoogleCalendarService::class)->deleteEvent($request->user(), $event);
+        }
+
         $event->delete();
 
         return redirect()->route('calendar.index')

@@ -1,9 +1,9 @@
 import { useState } from 'react';
-import { Head, useForm, router } from '@inertiajs/react';
+import { Head, useForm, router, Link } from '@inertiajs/react';
 import AppLayout from '@/Layouts/AppLayout';
 import Button from '@/Components/UI/Button';
 import Modal from '@/Components/UI/Modal';
-import { ChevronLeft, ChevronRight, Plus, Clock, MapPin, Pencil, Trash2, Video, Monitor } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Plus, Clock, MapPin, Pencil, Trash2, Video, Monitor, RefreshCw, CalendarDays, Unlink } from 'lucide-react';
 
 const TYPE_COLORS = {
     hearing:        { dot: 'bg-yellow-400', badge: 'text-yellow-400' },
@@ -24,7 +24,7 @@ function firstDayOfMonth(year, month) {
     return new Date(year, month, 1).getDay();
 }
 
-export default function CalendarIndex({ events, cases, month }) {
+export default function CalendarIndex({ events, cases, month, googleConnected }) {
     const [currentMonth, setCurrentMonth] = useState(() => {
         const [y, m] = (month ?? '').split('-').map(Number);
         return { year: y || new Date().getFullYear(), month: (m || new Date().getMonth() + 1) - 1 };
@@ -122,6 +122,33 @@ export default function CalendarIndex({ events, cases, month }) {
                     <p className="text-sm text-[#6B7491] mt-0.5">{events?.length ?? 0} eventos no mês</p>
                 </div>
                 <div className="flex items-center gap-3">
+                    {/* Google Calendar */}
+                    {googleConnected ? (
+                        <div className="flex items-center gap-2">
+                            <button
+                                onClick={() => router.post('/agenda/google/sincronizar', {}, { preserveScroll: true })}
+                                className="flex items-center gap-1.5 px-3 py-2 text-xs font-medium rounded-lg bg-[#13161E] border border-[#1E2330] text-[#2ECC8A] hover:bg-[#1A1E29] transition-colors"
+                                title="Sincronizar com Google Agenda"
+                            >
+                                <RefreshCw size={14} /> Sincronizar Google
+                            </button>
+                            <Link
+                                href="/agenda/google/desconectar"
+                                className="flex items-center gap-1.5 px-3 py-2 text-xs font-medium rounded-lg bg-[#13161E] border border-[#1E2330] text-[#6B7491] hover:text-[#E05555] hover:border-[#E05555]/30 transition-colors"
+                                title="Desconectar Google Agenda"
+                            >
+                                <Unlink size={14} /> Desconectar
+                            </Link>
+                        </div>
+                    ) : (
+                        <Link
+                            href="/agenda/google/conectar"
+                            className="flex items-center gap-1.5 px-3 py-2 text-xs font-medium rounded-lg bg-[#4A7CFF]/10 border border-[#4A7CFF]/30 text-[#4A7CFF] hover:bg-[#4A7CFF]/20 transition-colors"
+                        >
+                            <CalendarDays size={14} /> Conectar Google Agenda
+                        </Link>
+                    )}
+
                     <div className="flex items-center gap-1">
                         <button onClick={prevMonth} className="p-2 rounded-lg bg-[#13161E] border border-[#1E2330] text-[#6B7491] hover:text-[#E8EAF0]">
                             <ChevronLeft size={16} />
