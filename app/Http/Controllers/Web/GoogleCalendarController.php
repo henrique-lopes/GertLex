@@ -77,6 +77,7 @@ class GoogleCalendarController extends Controller
         $wsId    = $user->current_workspace_id;
         $created = $this->google->pullEvents($user, $wsId);
 
-        return response()->json(['message' => "{$created} novos eventos importados do Google."]);
+        return redirect()->route('calendar.index')
+            ->with('success', "{$created} novos eventos importados do Google.");
     }
 }

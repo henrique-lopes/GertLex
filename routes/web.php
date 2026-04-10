@@ -91,7 +91,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         // Google Calendar (deve vir antes de /agenda/{id})
         Route::get('/agenda/google/conectar',    [GoogleCalendarController::class, 'redirect'])->name('google.calendar.redirect');
         Route::get('/agenda/google/desconectar', [GoogleCalendarController::class, 'disconnect'])->name('google.calendar.disconnect');
-        Route::post('/agenda/google/sincronizar',[GoogleCalendarController::class, 'sync'])->name('google.calendar.sync');
+        Route::get('/agenda/google/sincronizar', [GoogleCalendarController::class, 'sync'])->name('google.calendar.sync');
 
         Route::put('/agenda/{id}',               [CalendarWebController::class, 'update'])->name('calendar.update');
         Route::delete('/agenda/{id}',            [CalendarWebController::class, 'destroy'])->name('calendar.destroy');

@@ -125,13 +125,13 @@ export default function CalendarIndex({ events, cases, month, googleConnected })
                     {/* Google Calendar */}
                     {googleConnected ? (
                         <div className="flex items-center gap-2">
-                            <button
-                                onClick={() => router.post('/agenda/google/sincronizar', {}, { preserveScroll: true })}
+                            <a
+                                href="/agenda/google/sincronizar"
                                 className="flex items-center gap-1.5 px-3 py-2 text-xs font-medium rounded-lg bg-[#13161E] border border-[#1E2330] text-[#2ECC8A] hover:bg-[#1A1E29] transition-colors"
                                 title="Sincronizar com Google Agenda"
                             >
                                 <RefreshCw size={14} /> Sincronizar Google
-                            </button>
+                            </a>
                             <a
                                 href="/agenda/google/desconectar"
                                 className="flex items-center gap-1.5 px-3 py-2 text-xs font-medium rounded-lg bg-[#13161E] border border-[#1E2330] text-[#6B7491] hover:text-[#E05555] hover:border-[#E05555]/30 transition-colors"
