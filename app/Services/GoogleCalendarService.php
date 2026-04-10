@@ -203,7 +203,7 @@ class GoogleCalendarService
                 'description'   => $item['description'] ?? null,
                 'meeting_url'   => $item['hangoutLink'] ?? null,
                 'is_virtual'    => isset($item['hangoutLink']) || isset($item['conferenceData']),
-                'type'          => 'other',
+                'type'          => 'reminder',
                 'status'        => 'pending',
                 'alert_sent'    => false,
             ]);

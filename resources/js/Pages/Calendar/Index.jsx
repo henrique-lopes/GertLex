@@ -7,14 +7,16 @@ import { ChevronLeft, ChevronRight, Plus, Clock, MapPin, Pencil, Trash2, Video, 
 
 const TYPE_COLORS = {
     hearing:        { dot: 'bg-yellow-400', badge: 'text-yellow-400' },
+    deadline:       { dot: 'bg-[#F5A623]',  badge: 'text-[#F5A623]' },
     fatal_deadline: { dot: 'bg-[#E05555]',  badge: 'text-[#E05555]' },
     meeting:        { dot: 'bg-[#4A7CFF]',  badge: 'text-[#4A7CFF]' },
     task:           { dot: 'bg-[#2ECC8A]',  badge: 'text-[#2ECC8A]' },
-    other:          { dot: 'bg-[#6B7491]',  badge: 'text-[#6B7491]' },
+    reminder:       { dot: 'bg-[#6B7491]',  badge: 'text-[#6B7491]' },
 };
 
 const TYPE_LABELS = {
-    hearing:'Audiência', fatal_deadline:'Prazo Fatal', meeting:'Reunião', task:'Tarefa', other:'Outro',
+    hearing:'Audiência', deadline:'Prazo', fatal_deadline:'Prazo Fatal',
+    meeting:'Reunião', task:'Tarefa', reminder:'Lembrete',
 };
 
 function daysInMonth(year, month) {
